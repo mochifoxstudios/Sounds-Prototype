@@ -13,9 +13,11 @@
      Nothing is ever timed with setTimeout, so rhythm never drifts.
    • Switching cues crossfades: the old cue keeps scheduling until its fade
      ends, so there is never a gap or a hard cut.
-   • INSTABILITY (0..1, setIntensity) is not a separate track. Story-phase cues
-     get a tension layer on top — heartbeat, ticking, a high whine, glitches,
-     a dissonant cluster — so Phase 3 at 90% still sounds like Phase 3.
+   • INSTABILITY (0..1, setIntensity) is not a separate track. It pushes a story
+     phase's tempo, detunes it, saturates it and makes it pulse with a heartbeat,
+     and each phase adds its own extra parts as it rises (the `X` value inside
+     the phase cues). So Phase 3 at 90% still sounds like Phase 3.
+     Screens and events ignore it.
    • THE OPERATOR MOTIF: one five-note phrase that recurs in every phase with
      a different instrument and treatment (inverted in ZENITH, missing its
      last note in THE LONG ITERATION). It is what ties the soundtrack together.
@@ -25,8 +27,14 @@
 
     // ── Context and buses ──────────────────────────────────────────────────
     let ctx = null, master, comp, analyser, musicBus, musicDuck, stingBus, sfxBus;
+    let musicDry, musicWet, musicThrob, pulseBus;
     let revIn, dlyIn, dly, noiseBuf;
     let intensity = 0, intensityTarget = 0;
+    /* `stress` is instability as the MUSIC feels it: equal to intensity while a
+       story phase is playing, 0 for screens and events. Everything instability
+       does to the sound reads this, never `intensity` directly. */
+    let stress = 0;
+    const TEMPO_PUSH = 0.2;     // +20% tempo at 100% instability
     let sfxPhase = 0;
     let pumpTimer = null;
     const LOOKAHEAD = 0.16;
@@ -42,8 +50,20 @@
         analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
         master.connect(comp); comp.connect(analyser); analyser.connect(ctx.destination);
 
-        musicBus = mkGain(0.9); musicDuck = mkGain(1);
-        musicBus.connect(musicDuck); musicDuck.connect(master);
+        /* music -> [clean | saturated] -> duck (stingers) -> throb (heartbeat) -> master.
+           The saturation mix and the throb depth are driven by instability. */
+        musicBus = mkGain(0.9); musicDuck = mkGain(1); musicThrob = mkGain(1);
+        musicDry = mkGain(1); musicWet = mkGain(0);
+        const shaper = ctx.createWaveShaper();
+        const curve = new Float32Array(2048);
+        for (let i = 0; i < curve.length; i++) { const x = i / 1023.5 - 1; curve[i] = Math.tanh(x * 5) / Math.tanh(5); }
+        shaper.curve = curve; shaper.oversample = '4x';
+        const wetTone = ctx.createBiquadFilter(); wetTone.type = 'lowpass'; wetTone.frequency.value = 5200;
+        musicBus.connect(musicDry); musicDry.connect(musicDuck);
+        musicBus.connect(shaper); shaper.connect(wetTone); wetTone.connect(musicWet); musicWet.connect(musicDuck);
+        musicDuck.connect(musicThrob); musicThrob.connect(master);
+        // The heartbeat bypasses the throb, or it would duck itself.
+        pulseBus = mkGain(1); pulseBus.connect(master);
         stingBus = mkGain(0.9); stingBus.connect(master);
         sfxBus = mkGain(0.9); sfxBus.connect(master);
 
@@ -115,6 +135,13 @@
     }
     const triad = (root, sc, d) => [dg(root, sc, d), dg(root, sc, d + 2), dg(root, sc, d + 4)];
 
+    /* Tuning drift: from 45% instability each note lands up to ±40 cents off,
+       so the music sounds like it is going out of tune. */
+    function warpCents() {
+        const x = clamp((stress - 0.45) / 0.55, 0, 1);
+        return x ? (Math.random() * 2 - 1) * 40 * x * x : 0;
+    }
+
     // ── Envelopes ──────────────────────────────────────────────────────────
     function envPerc(p, t, a, peak, d) {
         p.setValueAtTime(0.0001, t);
@@ -172,12 +199,13 @@
             lg = mkGain(o.vib[1]); lfo.connect(lg); lfo.start(t); lfo.stop(end);
         }
         const n = o.uni || 1, sp = o.spread !== undefined ? o.spread : 10;
+        const drift = D.warp ? warpCents() : 0;
         for (let i = 0; i < n; i++) {
             const osc = ctx.createOscillator();
             osc.type = o.type || 'sine';
             osc.frequency.setValueAtTime(f, t);
             if (o.glide) osc.frequency.exponentialRampToValueAtTime(f * o.glide, t + (o.gt || dur));
-            osc.detune.value = (o.det || 0) + (n > 1 ? (i / (n - 1) * 2 - 1) * sp : 0);
+            osc.detune.value = (o.det || 0) + drift + (n > 1 ? (i / (n - 1) * 2 - 1) * sp * (1 + stress * 0.8) : 0);
             if (lg) lg.connect(osc.detune);
             osc.connect(dest); osc.start(t); osc.stop(end);
         }
@@ -192,6 +220,7 @@
         const end = t + dur + 0.1, g = chain(D, o);
         const c = ctx.createOscillator(), m = ctx.createOscillator(), mg = ctx.createGain();
         c.frequency.value = f; m.frequency.value = f * (o.ratio || 3.5);
+        if (D.warp) c.detune.value = warpCents();
         const idx = (o.idx !== undefined ? o.idx : 2.5) * f;
         mg.gain.setValueAtTime(idx, t);
         mg.gain.exponentialRampToValueAtTime(Math.max(1, idx * 0.04), t + dur * 0.6);
@@ -330,7 +359,10 @@
         rnd() { return this._rng(); },
         chance(p) { return this._rng() < p; },
         pick(a) { return a[Math.floor(this._rng() * a.length)]; },
-        get I() { return intensity; },
+        get I() { return stress; },
+        /* X: how far past 45% instability we are, 0..1. The phase-specific
+           extra parts are written against this. */
+        get X() { return clamp((stress - 0.45) / 0.55, 0, 1); },
         tone(t, f, d, o) { tone(this.D, t, f, d, o); },
         bell(t, f, d, o) { bell(this.D, t, f, d, o); },
         pad(t, n, d, o) { pad(this.D, t, n, d, o); },
@@ -367,8 +399,8 @@
         const echo = mkGain(1); echo.connect(fades[2]);
         const p = Object.create(P_PROTO);
         Object.assign(p, {
-            name, cue, D: { dry, rev, echo }, fades,
-            step: 0, t0: t, sd: 60 / cue.bpm / 4,
+            name, cue, D: { dry, rev, echo, warp: !!cue.tension }, fades,
+            step: 0, t0: t, next: t, sd0: 60 / cue.bpm / 4, sd: 60 / cue.bpm / 4,
             _rng: rng(hash(name)), st: {}, stopAt: null,
         });
         if (cue.init) cue.init(p);
@@ -389,10 +421,21 @@
         if (!ctx) return;
         const now = ctx.currentTime;
         intensity += (intensityTarget - intensity) * 0.06;
+        stress = (current && current.cue.tension) ? intensity : 0;
+
+        // Saturation: creeps in from 60%, about half wet at 100%.
+        const wet = clamp((stress - 0.6) / 0.4, 0, 1) * 0.55;
+        musicWet.gain.setTargetAtTime(wet, now, 0.1);
+        musicDry.gain.setTargetAtTime(1 - wet * 0.55, now, 0.1);
+
         const horizon = now + LOOKAHEAD;
         for (const p of players) {
+            /* Steps advance incrementally rather than from t0, so the tempo can be
+               pushed live: a phase runs up to 20% faster at full instability. */
+            const push = (p === current && p.cue.tension) ? 1 + TEMPO_PUSH * stress : 1;
+            p.sd = p.sd0 / push;
             for (;;) {
-                const base = p.t0 + p.step * p.sd;
+                const base = p.next;
                 if (base >= horizon) break;
                 if (p.stopAt !== null && base >= p.stopAt) break;
                 const t = base + ((p.step & 1) ? (p.cue.swing || 0) * p.sd : 0);
@@ -401,6 +444,7 @@
                     if (p.cue.tension && p === current) tensionLayer(p, p.step, t);
                 }
                 p.step++;
+                p.next += p.sd;
             }
         }
         for (let i = players.length - 1; i >= 0; i--) {
@@ -412,24 +456,50 @@
         }
     }
 
-    /* The instability layer. Thresholds match the game's own: the heartbeat
-       starts at 30% (systems3.js Heartbeat), Redline territory is 90%+. */
+    /* THE INSTABILITY LAYER, on top of every story phase. Each stage is meant to
+       be heard on laptop and phone speakers, not only felt through a subwoofer.
+         always   tempo pushes up to +20% (see pump)
+         25%      heartbeat, and the whole mix pulses with it
+         45%      tuning drift (warpCents) + each phase's own extra parts (P.X)
+         60%      saturation on the music bus; ticking
+         80%      a high whine, glitches, a riser every fourth bar
+         90%      heartbeat on every beat, a dissonant cluster every bar     */
+    function heartbeat(t, I) {
+        const D = { dry: pulseBus, rev: revIn, echo: null };
+        const v = 0.3 + I * 0.45;
+        [[0, 1], [0.17, 0.62]].forEach(([dt, k]) => {
+            kick(D, t + dt, { f0: 120, f1: 44, pd: 0.07, d: 0.24, vol: v * k, click: false, rev: 0.06 });
+            // The mid-range knock is what makes it audible on small speakers.
+            tone(D, t + dt, 160, 0.07, { type: 'triangle', glide: 0.55, gt: 0.06, lp: 900, vol: v * k * 0.35, rev: 0.05 });
+            noise(D, t + dt, 0.035, { type: 'lowpass', f: 700, vol: v * k * 0.18, rev: 0 });
+        });
+        // The mix ducks on every beat and swells back, so the music seems to pulse.
+        const depth = clamp((I - 0.25) / 0.75, 0, 1) * 0.5;
+        musicThrob.gain.cancelScheduledValues(t);
+        musicThrob.gain.setValueAtTime(1 - depth, t);
+        musicThrob.gain.linearRampToValueAtTime(1, t + 0.42);
+    }
+
     function tensionLayer(p, s, t) {
-        const I = intensity;
-        if (I < 0.3) return;
+        const I = stress;
+        if (I < 0.25) return;
         const pos = s % 16, bar = s >> 4, D = p.D, R = p.cue.root || 48;
-        const every = I > 0.82 ? 4 : I > 0.6 ? 8 : 16;
-        if (pos % every === 0) {
-            const v = 0.12 + I * 0.3;
-            kick(D, t, { f0: 95, f1: 42, d: 0.22, vol: v, click: false, rev: 0.08 });
-            kick(D, t + 0.14, { f0: 82, f1: 38, d: 0.2, vol: v * 0.6, click: false, rev: 0.08 });
+        const every = I >= 0.9 ? 4 : I >= 0.45 ? 8 : 16;
+        if (pos % every === 0) heartbeat(t, I);
+
+        if (I >= 0.6) {
+            const k = (I - 0.6) / 0.4;
+            if (p.chance(0.35 + k * 0.5)) hat(D, t, { vol: 0.02 + k * 0.03, f: 8000, pan: p.rnd() * 1.4 - 0.7 });
         }
-        if (I > 0.5 && p.chance(0.25 + (I - 0.5))) hat(D, t, { vol: 0.01 + I * 0.018, pan: p.rnd() * 1.4 - 0.7 });
-        if (I > 0.68 && pos === 0 && bar % 2 === 0)
-            tone(D, t, M(R + 37), p.sd * 32, { sus: true, a: 1.2, r: 0.6, vol: 0.05 * (I - 0.6), vib: [6.7, 28], rev: 0.5 });
-        if (I > 0.75 && p.chance((I - 0.75) * 0.22)) glitch(D, t, { vol: 0.028, pan: p.rnd() * 2 - 1 });
-        if (I > 0.9 && pos === 0 && bar % 2 === 1)
-            pad(D, t, [R + 12, R + 13, R + 18], p.sd * 16, { lp: 900, a: 0.9, r: 0.3, vol: 0.06, rev: 0.3 });
+        if (I >= 0.8) {
+            const k = (I - 0.8) / 0.2;
+            if (pos === 0 && bar % 2 === 0)
+                tone(D, t, M(R + 37), p.sd * 32, { sus: true, a: 0.8, r: 0.5, vol: 0.025 + k * 0.035, vib: [6.7, 30], rev: 0.5 });
+            if (p.chance(0.03 + k * 0.08)) glitch(D, t, { vol: 0.045, pan: p.rnd() * 2 - 1 });
+            if (pos === 0 && bar % 4 === 3) riser(D, t, p.sd * 16, { vol: 0.05 + k * 0.04 });
+        }
+        if (I >= 0.9 && pos === 0)
+            pad(D, t, [R + 12, R + 13, R + 18, R + 19], p.sd * 14, { lp: 1400, a: 0.5, r: 0.3, vol: 0.09, rev: 0.3 });
     }
 
     // ── CUES ───────────────────────────────────────────────────────────────
@@ -560,9 +630,14 @@
             if (P.st.w === undefined) P.st.w = 4;
             if (pos % 2 === 0 && P.chance(0.62)) {
                 P.st.w = clamp(P.st.w + P.pick([-2, -1, -1, 1, 1, 2]), 0, 10);
-                P.bell(t, M(dg(R, SC.penta, P.st.w)), 1.1, { ratio: 2, idx: 0.9, vol: 0.07, rev: 0.45, echo: 0.25, pan: P.rnd() * 0.6 - 0.3 });
+                const n = dg(R, SC.penta, P.st.w);
+                P.bell(t, M(n), 1.1, { ratio: 2, idx: 0.9, vol: 0.07, rev: 0.45, echo: 0.25, pan: P.rnd() * 0.6 - 0.3 });
+                // Stressed: a second music box answers every note a tritone down, out of step.
+                if (P.chance(P.X)) P.bell(t + P.sd * 3, M(n - 6), 1.1, { ratio: 2.9, idx: 1.4, vol: 0.06, rev: 0.5, pan: 0.5 });
             }
-            if (pos === 0 && bar % 2 === 0) P.tone(t, M(36 + [0, -3, -7, -5][(bar >> 1) % 4]), P.sd * 32, { sus: true, a: 0.3, r: 1, vol: 0.18 });
+            const bassN = 36 + [0, -3, -7, -5][(bar >> 1) % 4];
+            if (P.X > 0.5) { if (pos % 4 === 0) P.tone(t, M(bassN), P.sd * 3, { sus: true, a: 0.01, r: 0.1, vol: 0.2 }); }
+            else if (pos === 0 && bar % 2 === 0) P.tone(t, M(bassN), P.sd * 32, { sus: true, a: 0.3, r: 1, vol: 0.18 });
             if (pos === 0 && bar % 8 === 4) P.motif(t, R + 12, SC.major, (m, tt) => P.bell(tt, M(m), 1.4, { ratio: 2, idx: 0.7, vol: 0.06, rev: 0.5, echo: 0.3 }));
         },
     };
@@ -575,14 +650,18 @@
             const pos = s % 16, bar = s >> 4, sc = SC.major, R = 48;
             const cd = [5, 3, 0, 4][(bar >> 1) % 4];
             if (pos === 0 && bar % 2 === 0) P.pad(t, triad(R + 12, sc, cd), P.sd * 32, { type: 'triangle', uni: 2, spread: 7, lp: 1600, a: 0.9, r: 1.2, vol: 0.09 });
-            if (pos % 2 === 0) {
-                const arp = [0, 2, 4, 2, 7, 4, 2, 4];
-                P.bell(t, M(dg(R + 24, sc, cd + arp[(pos >> 1) % 8])), 0.7, { ratio: 3.01, idx: 1.6, vol: 0.05, rev: 0.35, echo: 0.2, pan: (pos % 4 ? 0.25 : -0.25) });
+            const X = P.X;
+            const arp = [0, 2, 4, 2, 7, 4, 2, 4];
+            if (pos % 2 === 0 || X > 0.5) {
+                const oct = pos % 2 ? 7 : 0;         // stressed: the arpeggio doubles into 16ths, an octave up
+                P.bell(t, M(dg(R + 24, sc, cd + arp[(pos >> 1) % 8] + oct)), 0.7, { ratio: 3.01, idx: 1.6, vol: pos % 2 ? 0.035 : 0.05, rev: 0.35, echo: 0.2, pan: (pos % 4 ? 0.25 : -0.25) });
             }
-            if (pos === 0 || pos === 8) P.kick(t, { vol: 0.3, f0: 115, f1: 44 });
+            if (pos === 0 || pos === 8 || (X > 0 && (pos === 4 || pos === 12))) P.kick(t, { vol: 0.3 + X * 0.2, f0: 115, f1: 44 });
             if (pos === 12) P.wood(t, 1250, { vol: 0.04 });
-            if (pos === 0 || pos === 6 || pos === 10) P.tone(t, M(dg(R - 12, sc, cd + (pos === 6 ? 4 : 0))), 0.32, { type: 'triangle', lp: 650, vol: 0.18, rev: 0.05 });
-            if (P.I > 0.4 && pos % 2 === 1) P.hat(t, { vol: 0.012 });
+            const bassHits = X > 0 ? [0, 3, 6, 8, 10, 14] : [0, 6, 10];
+            if (bassHits.indexOf(pos) >= 0) P.tone(t, M(dg(R - 12, sc, cd + (pos === 6 ? 4 : 0))), 0.28, { type: 'triangle', lp: 650 + X * 900, vol: 0.18, rev: 0.05 });
+            if (P.I > 0.3 && pos % 2 === 1) P.hat(t, { vol: 0.02 });
+            if (X > 0.7 && pos === 14 && bar % 2 === 1) P.bell(t, 1320, 0.5, { ratio: 1.41, idx: 5, vol: 0.06, rev: 0.3 });
             if (pos === 0 && bar % 8 === 4) P.motif(t, R + 24, sc, (m, tt, d) => P.bell(tt, M(m), d * 2.5, { ratio: 2, idx: 1.4, vol: 0.09, rev: 0.4, echo: 0.3 }));
         },
     };
@@ -595,10 +674,17 @@
             const pos = s % 16, bar = s >> 4, sc = SC.minor, R = 40;
             const cd = [0, 5, 2, 6][(bar >> 1) % 4];
             const arp = [0, 2, 4, 7, 4, 2, 0, 2, 4, 7, 9, 7, 4, 2, 4, 7];
-            P.tone(t, M(dg(R + 24, sc, cd + arp[pos])), 0.11, { type: 'sawtooth', lp: 500, fenv: 3200, ft: 0.08, vol: 0.05, rev: 0.15, echo: 0.2, pan: pos % 2 ? 0.28 : -0.28 });
+            const X = P.X;
+            P.tone(t, M(dg(R + 24, sc, cd + arp[pos])), 0.11, { type: 'sawtooth', lp: 500, fenv: 3200 + X * 3000, ft: 0.08, vol: 0.05, rev: 0.15, echo: 0.2, pan: pos % 2 ? 0.28 : -0.28 });
+            // Stressed: the arpeggiator doubles an octave up and the line runs hotter.
+            if (X > 0.35) P.tone(t, M(dg(R + 36, sc, cd + arp[(pos + 3) % 16])), 0.08, { type: 'square', lp: 3500, vol: 0.025 + X * 0.02, rev: 0.1, pan: pos % 2 ? -0.5 : 0.5 });
             if (pos % 4 === 0) P.kick(t, { vol: 0.5, f0: 140, f1: 46 });
             if (pos === 4 || pos === 12) P.clap(t, { vol: 0.16 });
             if (pos % 4 === 2) P.hat(t, { vol: 0.045, open: P.I > 0.5 });
+            if (X > 0 && pos % 2 === 1) P.hat(t, { vol: 0.025 + X * 0.02 });
+            if (X > 0.6 && bar % 2 === 1 && pos >= 12) P.snare(t, { vol: 0.08 + (pos - 12) * 0.035, d: 0.08 });
+            if (X > 0.75 && pos === 0 && bar % 4 === 0)
+                P.tone(t, 620, P.sd * 16, { type: 'square', lp: 1800, sus: true, a: 0.05, r: 0.2, vol: 0.03, glide: 1.6, gt: P.sd * 8, rev: 0.4 });
             if (pos % 2 === 0) P.tone(t, M(dg(R, sc, cd) + (pos % 4 === 2 ? 12 : 0)), 0.13, { type: 'sawtooth', lp: 520, vol: 0.13, rev: 0 });
             if (pos === 0 && bar % 2 === 0) P.pad(t, triad(R + 12, sc, cd), P.sd * 32, { lp: 700, vol: 0.05, a: 0.6 });
             if (bar % 4 === 3 && pos === 14) P.bell(t, M(R + 31), 0.6, { ratio: 1.41, idx: 4, vol: 0.05, rev: 0.4, pan: 0.5 });
@@ -618,14 +704,17 @@
                 P.pad(t, triad(R, sc, cd), P.sd * 32, { uni: 3, spread: 22, lp: 900, vib: [0.25, 14], a: 1, r: 1, vol: 0.1 });
                 P.tone(t, M(dg(R - 24, sc, cd)), P.sd * 32, { sus: true, a: 0.2, r: 0.8, vol: 0.2 });
             }
-            if (pos % 2 === 0 && !P.chance(0.2)) {
+            const X = P.X;
+            // Stressed: the arpeggio plays more wrong notes and fewer rests, and fills in to 16ths.
+            if ((pos % 2 === 0 || P.chance(X * 0.6)) && !P.chance(0.2 - X * 0.15)) {
                 let n = P.pick(triad(R + 12, sc, cd));
-                if (P.chance(0.15)) n = dg(R + 12, sc, cd) + P.pick([1, 6]);
-                P.tone(t, M(n + 12), 0.2, { type: 'triangle', vol: 0.07, rev: 0.3, echo: 0.4, pan: P.rnd() * 1.2 - 0.6 });
+                if (P.chance(0.15 + X * 0.45)) n = dg(R + 12, sc, cd) + P.pick([1, 6, 11]);
+                P.tone(t, M(n + 12), 0.2, { type: X > 0.5 ? 'sawtooth' : 'triangle', lp: 2400, vol: 0.07, rev: 0.3, echo: 0.4, pan: P.rnd() * 1.2 - 0.6 });
             }
-            if (pos === 0 || (pos === 10 && P.chance(0.5))) P.kick(t, { vol: 0.45, f0: 120, f1: 40, d: 0.45 });
+            if (pos === 0 || (pos === 10 && P.chance(0.5 + X * 0.5))) P.kick(t, { vol: 0.45, f0: 120, f1: 40, d: 0.45 });
             if (pos === 8) P.snare(t, { vol: 0.24, rev: 0.6 });
-            if (P.chance(0.035)) P.glitch(t, { vol: 0.035, pan: P.rnd() * 2 - 1 });
+            if (X > 0.4 && (pos === 3 || pos === 13) && P.chance(0.7)) P.snare(t, { vol: 0.07, d: 0.06, rev: 0.2 });
+            if (P.chance(0.035 + X * 0.12)) P.glitch(t, { vol: 0.035 + X * 0.015, pan: P.rnd() * 2 - 1 });
             if (pos === 0 && bar % 8 === 6)
                 P.motif(t, R + 24, sc, (m, tt, d, i) => P.tone(tt, M(m), d, { type: 'sawtooth', uni: 2, spread: 18, lp: 1800, sus: true, a: 0.02, r: 0.3, vol: 0.08, rev: 0.4, echo: 0.3, glide: i === 4 ? 0.94 : undefined, gt: d }));
         },
@@ -641,12 +730,18 @@
             if (pos === 0 && bar % 2 === 0) {
                 const r = dg(R + 12, sc, cd);
                 P.pad(t, [r, r + 7, r + 14, dg(R + 24, sc, cd + 2)], P.sd * 32, { uni: 3, spread: 12, lp: 1400, a: 2, r: 2.5, vol: 0.1, rev: 0.6 });
-                P.choir(t, M(dg(R + 24, sc, cd + 4)), P.sd * 32, { v: 'a', vol: 0.05, rev: 0.8 });
+                const top = dg(R + 24, sc, cd + 4);
+                P.choir(t, M(top), P.sd * 32, { v: 'a', vol: 0.05, rev: 0.8 });
+                // Stressed: a second choir voice a semitone above, grinding against the first.
+                if (P.X > 0.3) P.choir(t, M(top + 1), P.sd * 32, { v: 'e', vol: 0.02 + P.X * 0.035, rev: 0.8 });
                 P.tone(t, M(dg(R - 12, sc, cd)), P.sd * 32, { sus: true, a: 1, r: 1.5, vol: 0.2 });
             }
+            const X = P.X;
             if (pos === 0) P.kick(t, { vol: 0.45, f0: 90, f1: 34, d: 0.9, rev: 0.3, click: false });
             if (s % 6 === 0) P.tom(t, P.pick([62, 70, 78]), { vol: 0.22, pan: P.rnd() - 0.5 });
-            if (P.I > 0.4 && s % 6 === 3) P.tom(t, 92, { vol: 0.14 });
+            // Stressed: the timpani lose the pattern and start rolling.
+            if (X > 0 && s % 6 === 3) P.tom(t, 92, { vol: 0.14 + X * 0.1 });
+            if (X > 0.5 && s % 2 === 1 && P.chance(X * 0.6)) P.tom(t, P.pick([110, 130, 150]), { vol: 0.1, d: 0.25, pan: P.rnd() * 1.6 - 0.8 });
             if (pos % 4 === 0 && P.chance(0.5)) P.bell(t, M(dg(R + 36, sc, P.pick([0, 1, 2, 4, 6]))), 2.2, { ratio: 3.5, idx: 2, vol: 0.035, rev: 0.7, echo: 0.5, pan: P.rnd() * 1.6 - 0.8 });
             if (pos === 0 && bar % 4 === 0) P.noise(t, P.sd * 64, { f: 300, f2: 1100, ft: P.sd * 32, q: 3, sus: true, a: 2, r: 2, vol: 0.025, rev: 0.6 });
             if (pos === 0 && bar % 8 === 2)
@@ -661,7 +756,8 @@
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4, R = 38;
             const cycle = bar % 32;
-            const wear = Math.min(1, cycle / 32 * 0.85 + P.I * 0.2);
+            // Stressed: the loop wears out much faster, down to near-ruin at 100%.
+            const wear = Math.min(1, cycle / 32 * 0.85 * (1 - P.X * 0.5) + P.X * 0.85);
             if (pos === 0 && bar % 4 === 0) {
                 P.pad(t, [R - 12, R - 5], P.sd * 64, { uni: 2, spread: 7, lp: 320, a: 2, r: 2, vol: 0.12, rev: 0.4 });
                 P.tone(t, M(R - 12), P.sd * 64, { sus: true, a: 2, r: 2, vol: 0.14 });
@@ -674,7 +770,7 @@
                     for (let k = 0; k < 3; k++) P.tone(t + k * P.sd / 4, M(LOOP[pos]), 0.12, Object.assign({}, o, { vol: 0.07 - k * 0.015 }));
                 } else P.tone(t, M(LOOP[pos]), 0.9, o);
             }
-            if (pos % 4 === 0) P.wood(t, 1500, { vol: 0.018, rev: 0.4 });
+            if (pos % 4 === 0 || (P.X > 0.5 && pos % 2 === 0)) P.wood(t, 1500, { vol: 0.018 + P.X * 0.03, rev: 0.4 });
             if (pos === 0 && bar % 2 === 0) P.kick(t, { vol: 0.32, f0: 70, f1: 32, d: 1.1, rev: 0.5, click: false });
             if (cycle === 0 && pos === 0 && bar > 0) P.noise(t, 0.4, { type: 'lowpass', f: 3000, f2: 200, vol: 0.05 });
             if (pos === 0 && bar % 8 === 4)
@@ -696,8 +792,15 @@
                 P.pad(t, CH, P.sd * 14, { uni: 3, spread: 16, lp: 1800, a: 0.01, r: 2, vol: 0.12, rev: 0.8 });
                 P.tone(t, M(R - 24), P.sd * 24, { sus: true, a: 0.01, r: 2, vol: 0.2 });
             }
+            const X = P.X;
+            // Stressed: the silence between hits fills up. Aftershocks, then a second hit every bar.
+            if (X > 0.25 && pos === 8) P.kick(t, { vol: 0.3 + X * 0.3, f0: 70, f1: 30, d: 1, rev: 0.6, click: false });
+            if (X > 0.6 && pos === 0 && bar % 2 === 1) {
+                P.noise(t, 0.5, { type: 'lowpass', f: 1800, f2: 150, vol: 0.08, rev: 0.7 });
+                P.pad(t, CH.map(n => n + 1), P.sd * 6, { uni: 2, lp: 2000, a: 0.01, r: 1, vol: 0.07, rev: 0.7 });
+            }
             if (pos === 0 && bar % 4 === 0) P.choir(t, M(R - 12), P.sd * 64, { v: 'u', a: 2, r: 2, vol: 0.05, rev: 0.7 });
-            if (P.chance(0.07)) P.bell(t, M(dg(R + 36, SC.zenith, Math.floor(P.rnd() * 8))), 2.5, { ratio: 4.23, idx: 2.2, vol: 0.03, rev: 0.9, echo: 0.5, pan: P.rnd() * 1.8 - 0.9 });
+            if (P.chance(0.07 + X * 0.2)) P.bell(t, M(dg(R + 36, SC.zenith, Math.floor(P.rnd() * 8))), 2.5, { ratio: 4.23, idx: 2.2, vol: 0.03, rev: 0.9, echo: 0.5, pan: P.rnd() * 1.8 - 0.9 });
             if (pos === 0 && bar % 8 === 5)
                 P.motif(t, R + 36, SC.zenith, (m, tt, d) => P.bell(tt, M(m), d + 2, { ratio: 2, idx: 1, vol: 0.07, rev: 0.8, echo: 0.4 }), { invert: true, stretch: 1.5 });
         },
@@ -1161,11 +1264,25 @@
     }
     function nowPlaying() {
         if (!ctx || !current) return null;
-        const el = Math.max(0, ctx.currentTime - current.t0);
-        const st = Math.floor(el / current.sd);
-        return { name: current.name, title: current.cue.title, group: current.cue.group, bpm: current.cue.bpm, key: current.cue.key,
-                 bar: Math.floor(st / 16) + 1, beat: Math.floor((st % 16) / 4) + 1, step: st };
+        // Scheduling runs ahead of the clock; step back to the one being heard now.
+        const ahead = Math.ceil(Math.max(0, current.next - ctx.currentTime) / current.sd);
+        const st = Math.max(0, current.step - ahead);
+        return { name: current.name, title: current.cue.title, group: current.cue.group, key: current.cue.key,
+                 bpm: Math.round(current.cue.bpm * current.sd0 / current.sd), baseBpm: current.cue.bpm,
+                 bar: Math.floor(st / 16) + 1, beat: Math.floor((st % 16) / 4) + 1, step: st,
+                 stress, layers: stressLayers() };
     }
+    // Which instability stages are sounding right now, for the lab's readout.
+    function stressLayers() {
+        const out = [];
+        if (stress >= 0.25) out.push('heartbeat');
+        if (stress >= 0.45) out.push('drift', 'phase parts');
+        if (stress >= 0.6) out.push('distortion');
+        if (stress >= 0.8) out.push('glitches');
+        if (stress >= 0.9) out.push('cluster');
+        return out;
+    }
+
     function meta(table) {
         return Object.keys(table).map(id => {
             const c = table[id];

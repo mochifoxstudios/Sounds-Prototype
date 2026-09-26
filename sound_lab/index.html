@@ -76,7 +76,11 @@
   .ticks { position: relative; height: 30px; font-family: var(--mono); font-size: 0.66rem; color: var(--faint); margin-top: 4px; }
   .ticks span { position: absolute; transform: translateX(-50%); text-align: center; white-space: nowrap; line-height: 1.3; }
   .ticks span::before { content: ''; display: block; width: 1px; height: 5px; background: var(--line-hi); margin: 0 auto 2px; }
-  .ticks .hot { color: var(--live); }
+  .ticks span.on { color: var(--amber); }
+  .ticks span.on::before { background: var(--amber); }
+  .ticks .hot.on { color: var(--live); }
+  .ticks .hot.on::before { background: var(--live); }
+  .hint b { color: var(--amber); font-weight: 500; }
   .seg { display: flex; border: 1px solid var(--line-hi); border-radius: 4px; overflow: hidden; }
   .seg button { flex: 1; padding: 7px 0; background: var(--panel); border: 0; border-right: 1px solid var(--line); cursor: pointer; font-family: var(--mono); font-size: 0.78rem; color: var(--dim); }
   .seg button:last-child { border-right: 0; }
@@ -181,13 +185,14 @@
     <div class="ctl">
       <label for="instab">Instability <output id="instab-out">0%</output></label>
       <input type="range" id="instab" min="0" max="100" value="0">
-      <div class="ticks" aria-hidden="true">
-        <span style="left:30%">30<br>heartbeat</span>
-        <span style="left:50%">50<br>ticking</span>
-        <span style="left:70%">70<br>whine</span>
-        <span class="hot" style="left:90%">90<br>redline</span>
+      <div class="ticks" id="ticks" aria-hidden="true">
+        <span data-at="25" style="left:25%">25<br>heartbeat</span>
+        <span data-at="45" style="left:45%">45<br>drift</span>
+        <span data-at="60" style="left:60%">60<br>distortion</span>
+        <span data-at="80" style="left:80%">80<br>glitches</span>
+        <span data-at="90" class="hot" style="left:94%">90<br>redline</span>
       </div>
-      <p class="hint">Only the story phases react. Screens and events ignore instability, the way the Eye of the Storm freezes it at 0.</p>
+      <p class="hint" id="stress-read">Only the story phases react: tempo climbs up to 20%, the tuning slips, the mix pulses with the heartbeat, and each phase adds its own parts.</p>
     </div>
     <div class="ctl">
       <label>SFX colour <output id="tint-out">Phase 0</output></label>
@@ -315,7 +320,14 @@
   }
 
   // Controls
-  $('instab').addEventListener('input', e => { S.setIntensity(e.target.value / 100); $('instab-out').textContent = e.target.value + '%'; });
+  const ticks = Array.from(document.querySelectorAll('#ticks span'));
+  $('instab').addEventListener('input', e => {
+    const v = +e.target.value;
+    S.setIntensity(v / 100);
+    $('instab-out').textContent = v + '%';
+    ticks.forEach(s => s.classList.toggle('on', v >= +s.dataset.at));
+  });
+  const HINT = $('stress-read').textContent;
   $('vol').addEventListener('input', e => { S.setVolume('master', e.target.value / 100); $('vol-out').textContent = e.target.value; });
   $('stop').addEventListener('click', () => { stopTour(); S.stop(); });
 
@@ -358,8 +370,12 @@
       syncTint();
     }
     $('now-text').innerHTML = np
-      ? '<b>' + np.title + '</b> · bar ' + np.bar + '.' + np.beat + ' · ' + np.bpm + ' BPM'
+      ? '<b>' + np.title + '</b> · bar ' + np.bar + '.' + np.beat + ' · ' + np.bpm + ' BPM' + (np.bpm !== np.baseBpm ? ' (from ' + np.baseBpm + ')' : '')
       : 'Silent. Pick any cue to start the audio.';
+    const sr = $('stress-read');
+    if (np && np.group === 'phase' && np.layers.length) sr.innerHTML = 'Now sounding: <b>' + np.layers.join(' · ') + '</b>, tempo +' + Math.round((np.bpm / np.baseBpm - 1) * 100) + '%';
+    else if (np && np.group !== 'phase' && +$('instab').value > 0) sr.textContent = 'This cue ignores instability. Play a story phase to hear it.';
+    else if (sr.textContent !== HINT) sr.textContent = HINT;
 
     const w = cv.clientWidth, h = cv.clientHeight, dpr = window.devicePixelRatio || 1;
     if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
