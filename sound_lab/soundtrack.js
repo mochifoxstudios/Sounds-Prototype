@@ -1153,14 +1153,106 @@
         { wave: 'square',   root: 72, grit: 0.28, rev: 0.6,  det: 38 },
     ];
 
+    /* ── ACQUIRE CLICK KITS ─────────────────────────────────────────────────
+       The button is pressed thousands of times, so one sound wears thin fast.
+       Each phase gets four variants built on ONE body (same instrument, same
+       weight) so they read as the same button. Each variant is pitched to a
+       note of that phase's key and chord, so any random run of them sounds like
+       a small melody over the phase theme rather than noise. On top of the
+       pitch, each variant has its own small quirk: a grace note, a double tap,
+       a stutter.
+       Picked at random, never the same one twice in a row (AUDIO_MANIFEST
+       §9.5 rule 2, the same rule micro_bus.js follows).
+       `fn(D, t, midi, i)`: i is the variant index, so the quirk can key off it. */
+    const CLICK_KITS = [
+        {   // 0 · Terminal idle, C pentatonic: music-box tings
+            name: 'Music box', notes: [72, 74, 76, 79], labels: ['C ting', 'D ting', 'E ting', 'G with sparkle'],
+            fn(D, t, m, i) {
+                bell(D, t, M(m + 12), 0.45, { ratio: 2, idx: 0.8 + i * 0.12, vol: 0.09, rev: 0.15 });
+                kick(D, t, { f0: 160, f1: 70, pd: 0.03, d: 0.06, vol: 0.16, click: false });
+                if (i === 3) tone(D, t + 0.035, M(m + 24), 0.08, { vol: 0.025, rev: 0.25 });
+            },
+        },
+        {   // I · The Awakening, C major: warm FM bells over a soft knock
+            name: 'Warm bell', notes: [72, 76, 79, 81], labels: ['C bell', 'E bell + fifth', 'G bell', 'A bright'],
+            fn(D, t, m, i) {
+                bell(D, t, M(m), 0.42, { ratio: 3.01, idx: i === 3 ? 2.2 : 1.4, vol: 0.085, rev: 0.2 });
+                tone(D, t, M(m - 24), 0.05, { type: 'triangle', glide: 0.5, gt: 0.05, lp: 1200, vol: 0.12, rev: 0 });
+                kick(D, t, { f0: 150, f1: 60, pd: 0.03, d: 0.07, vol: 0.18, click: false });
+                if (i === 1) bell(D, t + 0.04, M(m + 7), 0.3, { ratio: 3.01, idx: 1, vol: 0.035, rev: 0.25 });
+            },
+        },
+        {   // II · The City Nexus, E minor: mechanical key-switch clacks
+            name: 'Key switch', notes: [64, 67, 71, 74], labels: ['E clack', 'G double-tap', 'B metal', 'D heavy'],
+            fn(D, t, m, i) {
+                const clack = tt => {
+                    noise(D, tt, 0.012, { type: 'bandpass', f: 3200, q: 1.5, vol: 0.1, rev: 0 });
+                    tone(D, tt, M(m + 12), 0.035, { type: 'square', lp: 3500, vol: 0.055, rev: 0.05 });
+                };
+                clack(t);
+                kick(D, t, { f0: i === 3 ? 170 : 210, f1: i === 3 ? 45 : 60, pd: 0.03, d: i === 3 ? 0.12 : 0.05, vol: i === 3 ? 0.34 : 0.24, click: false });
+                if (i === 1) clack(t + 0.032);
+                if (i === 2) bell(D, t, M(m + 24), 0.18, { ratio: 1.41, idx: 3, vol: 0.035, rev: 0.1 });
+            },
+        },
+        {   // III · The Simulation, C phrygian: detuned saw blips that misbehave
+            name: 'Detuned blip', notes: [72, 73, 79, 82], labels: ['C blip', 'D♭ with glitch', 'G rising', 'B♭ smeared'],
+            fn(D, t, m, i) {
+                tone(D, t, M(m), 0.06, { type: 'sawtooth', uni: 2, spread: i === 3 ? 38 : 16, lp: 2600, glide: i === 2 ? 1.5 : 0.6, gt: 0.05, vol: 0.09, rev: 0.2 });
+                kick(D, t, { f0: 170, f1: 55, pd: 0.035, d: 0.08, vol: 0.24, click: false });
+                if (i === 1) glitch(D, t + 0.03, { vol: 0.03, n: 3, st: 0.012, lo: 1200, hi: 3200 });
+            },
+        },
+        {   // IV · Cosmic Domination, F lydian: glass bells with a far-off low tom
+            name: 'Glass bell', notes: [77, 81, 83, 84], labels: ['F glass', 'A with shimmer', 'B♮ long', 'C with depth'],
+            fn(D, t, m, i) {
+                bell(D, t, M(m + 12), i === 2 ? 1.3 : 0.8, { ratio: 3.5, idx: 1.8, vol: 0.06, rev: 0.5, echo: 0.12 });
+                tom(D, t, M(m - 36), { vol: 0.16, d: 0.3, rev: 0.3 });
+                if (i === 1) bell(D, t + 0.05, M(m + 24), 0.6, { ratio: 3.5, idx: 1.2, vol: 0.02, rev: 0.6 });
+                if (i === 3) tone(D, t, M(m - 24), 0.35, { sus: true, a: 0.005, r: 0.3, vol: 0.09, rev: 0.3 });
+            },
+        },
+        {   // V · The Long Iteration, D minor: worn typewriter plucks
+            name: 'Worn key', notes: [62, 65, 69, 64], labels: ['D pluck', 'F stutter', 'A sagging', 'E dull'],
+            fn(D, t, m, i) {
+                const det = Math.random() * 24 - 12;         // tape wear: never quite the same pitch
+                noise(D, t, 0.01, { type: 'highpass', f: 2500, vol: 0.07, rev: 0 });
+                const o = { type: 'triangle', lp: i === 3 ? 600 : 1100, fenv: i === 3 ? 1200 : 4200, ft: 0.08, det, vol: 0.1, rev: 0.25, glide: i === 2 ? 0.96 : undefined, gt: 0.25 };
+                if (i === 1) for (let k = 0; k < 3; k++) tone(D, t + k * 0.028, M(m + 12), 0.06, Object.assign({}, o, { vol: 0.08 - k * 0.02 }));
+                else tone(D, t, M(m + 12), 0.25, o);
+                kick(D, t, { f0: 130, f1: 50, pd: 0.03, d: 0.08, vol: 0.2, click: false });
+            },
+        },
+        {   // VI · Zenith, alien scale on C: hollow square and glass, a deep sub
+            name: 'Hollow', notes: [72, 76, 78, 82], labels: ['C hollow', 'E reversed', 'F♯ shadowed', 'B♭ enormous'],
+            fn(D, t, m, i) {
+                if (i === 1) tone(D, t, M(m), 0.07, { type: 'square', lp: 1800, sus: true, a: 0.06, r: 0.01, vol: 0.08, rev: 0.4 });
+                else tone(D, t, M(m), 0.08, { type: 'square', lp: 1800, vol: 0.075, rev: 0.4 });
+                bell(D, t, M(m + 12), 0.5, { ratio: 4.23, idx: 1.6, vol: 0.035, rev: 0.6 });
+                kick(D, t, { f0: 110, f1: i === 3 ? 30 : 40, pd: 0.05, d: i === 3 ? 0.45 : 0.14, vol: i === 3 ? 0.4 : 0.26, click: false, rev: 0.2 });
+                if (i === 2) tone(D, t + 0.012, M(m + 1), 0.08, { type: 'square', lp: 1500, vol: 0.03, rev: 0.5 });
+                if (i === 3) noise(D, t, 0.3, { type: 'lowpass', f: 1500, f2: 150, vol: 0.05, rev: 0.6 });
+            },
+        },
+    ];
+    const _lastClick = {};
+    function pickClick(phase) {
+        const n = CLICK_KITS[phase].notes.length;
+        let i = Math.floor(Math.random() * n);
+        if (i === _lastClick[phase]) i = (i + 1 + Math.floor(Math.random() * (n - 1))) % n;
+        _lastClick[phase] = i;
+        return i;
+    }
+
     let _sfxWin = 0, _sfxCount = 0;
     const SFX = {
         click: {
-            title: 'ACQUIRE click', blurb: 'The main button. Changes character with every phase.',
-            fn(D, t, T) {
-                tone(D, t, M(T.root + 12), 0.05, { type: T.wave, glide: 0.55, gt: 0.05, lp: 5000, det: T.det, vol: 0.13, rev: T.rev });
-                kick(D, t, { f0: 180, f1: 60, pd: 0.04, d: 0.08, vol: 0.28, click: false });
-                if (T.grit) noise(D, t, 0.03, { type: 'bandpass', f: 2500, q: 1, vol: T.grit * 0.15, rev: 0 });
+            title: 'ACQUIRE click', blurb: 'The main button. Four variants per phase, picked at random.',
+            fn(D, t, T, opt) {
+                const kit = CLICK_KITS[sfxPhase] || CLICK_KITS[0];
+                const i = (opt && opt.variant !== undefined) ? clamp(opt.variant | 0, 0, kit.notes.length - 1) : pickClick(sfxPhase);
+                kit.fn(D, t, kit.notes[i], i);
+                return i;
             },
         },
         hover: { title: 'Hover', blurb: 'Barely there.', fn(D, t, T) { tone(D, t, M(T.root + 31), 0.015, { vol: 0.02, rev: 0 }); } },
@@ -1251,7 +1343,9 @@
         emit('stinger', name);
         return true;
     }
-    function sfx(name) {
+    /* sfx(name, opt) returns false if dropped, otherwise true — or, for 'click',
+       the index of the variant that played. opt.variant forces one variant. */
+    function sfx(name, opt) {
         const X = SFX[name];
         if (!X) return false;
         ensure();
@@ -1259,8 +1353,8 @@
         if (now - _sfxWin > 80) { _sfxWin = now; _sfxCount = 0; }
         if (_sfxCount >= 6) return false;            // same guard as Sounds.play in game.js
         _sfxCount++;
-        X.fn({ dry: sfxBus, rev: revIn, echo: null }, ctx.currentTime + 0.005, TINT[sfxPhase] || TINT[0]);
-        return true;
+        const r = X.fn({ dry: sfxBus, rev: revIn, echo: null }, ctx.currentTime + 0.005, TINT[sfxPhase] || TINT[0], opt);
+        return r === undefined ? true : r;
     }
     function nowPlaying() {
         if (!ctx || !current) return null;
@@ -1307,5 +1401,9 @@
         cues: () => meta(CUES),
         stingers: () => meta(STINGERS),
         sfxList: () => meta(SFX),
+        clickKit: (phase) => {
+            const k = CLICK_KITS[clamp((phase === undefined ? sfxPhase : phase) | 0, 0, 6)];
+            return { name: k.name, variants: k.labels.slice() };
+        },
     };
 })();

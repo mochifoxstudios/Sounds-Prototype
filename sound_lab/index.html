@@ -141,6 +141,27 @@
   .pad span { font-size: 0.72rem; color: var(--faint); line-height: 1.35; }
   .pad kbd { font-family: var(--mono); font-size: 0.64rem; color: var(--amber-dim); }
 
+  /* ACQUIRE: the one control that looks like the game's own button. */
+  .acq { display: grid; grid-template-columns: 200px 1fr; gap: 28px; align-items: center; }
+  .acq-btn {
+    width: 180px; height: 180px; border-radius: 50%; cursor: pointer; justify-self: center;
+    border: 2px solid var(--kc, var(--amber));
+    background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--kc, var(--amber)) 30%, var(--raised)), var(--panel) 72%);
+    color: var(--text); font-family: var(--display); font-weight: 700; font-size: 1.05rem; letter-spacing: 0.2em;
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--kc, var(--amber)) 10%, transparent), 0 0 34px color-mix(in srgb, var(--kc, var(--amber)) 22%, transparent);
+    transition: transform 0.05s, box-shadow 0.15s;
+  }
+  .acq-btn:active, .acq-btn.hit { transform: scale(0.96); box-shadow: 0 0 0 10px color-mix(in srgb, var(--kc, var(--amber)) 18%, transparent), 0 0 48px color-mix(in srgb, var(--kc, var(--amber)) 40%, transparent); }
+  .acq-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .acq-kit { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .acq-kit .seg { flex: 1; min-width: 220px; max-width: 360px; }
+  .kit-name { font-family: var(--display); font-weight: 600; font-size: 1rem; letter-spacing: 0.06em; color: var(--kc, var(--amber)); min-width: 11ch; }
+  .variants { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .variants .pad.hit { border-color: var(--kc, var(--amber)); background: color-mix(in srgb, var(--kc, var(--amber)) 14%, var(--raised)); }
+  .acq-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .trail { font-family: var(--mono); font-size: 0.8rem; color: var(--dim); letter-spacing: 0.08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
+  .trail b { color: var(--kc, var(--amber)); font-weight: 500; }
+
   footer { margin-top: 44px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--faint); font-size: 0.78rem; font-family: var(--mono); line-height: 1.7; }
   footer code { color: var(--dim); }
 
@@ -148,6 +169,8 @@
     .phases { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .phase { min-height: 0; border-bottom: 1px solid var(--line); }
     .two { grid-template-columns: 1fr; }
+    .acq { grid-template-columns: 1fr; }
+    .variants { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .mixer { grid-template-columns: 1fr 1fr; }
     .mixer .ctl:first-child { grid-column: 1 / -1; }
   }
@@ -212,6 +235,27 @@
       <p>One theme per chapter, heavier as the story goes on. The same five-note Operator motif turns up in every one; listen for it.</p>
     </div>
     <div class="phases" id="phases"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>ACQUIRE click</h2>
+      <p>Four variants per phase on one sound, each tuned to a note of that phase's key. They play at random and never repeat back to back, so fast clicking plays a melody.</p>
+    </div>
+    <div class="acq">
+      <button class="acq-btn" id="acq" aria-label="Play a random ACQUIRE click">ACQUIRE</button>
+      <div class="acq-side">
+        <div class="acq-kit">
+          <span class="kit-name" id="kit-name"></span>
+          <div class="seg" id="kit-phase" role="group" aria-label="Which phase's click kit to hear"></div>
+        </div>
+        <div class="pads variants" id="variants"></div>
+        <div class="acq-row">
+          <button class="tbtn" id="rapid" aria-pressed="false" title="Clicks about seven times a second, like a player mashing the button">Rapid fire</button>
+          <span class="trail" id="trail" aria-live="off"></span>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section class="two">
@@ -300,24 +344,70 @@
     });
   }
   pads(S.stingers(), $('stingers'), id => S.stinger(id));
-  pads(S.sfxList(), $('sfx'), id => S.sfx(id));
+  pads(S.sfxList().filter(x => x.id !== 'click'), $('sfx'), id => S.sfx(id));
 
-  // SFX tint
-  const tintBtns = ROMAN.map((r, i) => {
-    const b = document.createElement('button');
-    b.textContent = r;
-    b.style.setProperty('--c', 'var(--ph' + i + ')');
-    b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
-    b.setAttribute('aria-label', 'Phase ' + r);
-    b.addEventListener('click', () => { S.setSfxPhase(i); syncTint(); S.sfx('click'); });
-    $('tint').appendChild(b);
-    return b;
+  // SFX tint: two phase selectors (mixer + ACQUIRE section) that stay in sync.
+  const tintBtns = [];
+  ['tint', 'kit-phase'].forEach(host => {
+    ROMAN.forEach((r, i) => {
+      const b = document.createElement('button');
+      b.textContent = r;
+      b.style.setProperty('--c', 'var(--ph' + i + ')');
+      b.dataset.p = i;
+      b.setAttribute('aria-label', 'Phase ' + r);
+      b.addEventListener('click', () => { S.setSfxPhase(i); syncTint(); click(); });
+      $(host).appendChild(b);
+      tintBtns.push(b);
+    });
   });
+
+  // ACQUIRE kit
+  const acq = $('acq'), varHost = $('variants');
+  let varPads = [], kitPhase = -1, trail = [];
+  function buildKit(p) {
+    if (p === kitPhase) return;
+    kitPhase = p;
+    const kit = S.clickKit(p);
+    document.querySelector('.acq').style.setProperty('--kc', 'var(--ph' + p + ')');
+    $('kit-name').textContent = kit.name;
+    varHost.innerHTML = '';
+    varPads = kit.variants.map((label, i) => {
+      const b = document.createElement('button');
+      b.className = 'pad';
+      b.innerHTML = '<b>' + (i + 1) + '</b><span>' + label + '</span>';
+      b.addEventListener('click', () => click(i));
+      varHost.appendChild(b);
+      return b;
+    });
+    trail = []; $('trail').textContent = 'Click to start a trail of the notes played.';
+  }
+  function flash(el, ms) { el.classList.add('hit'); setTimeout(() => el.classList.remove('hit'), ms || 110); }
+  function click(forced) {
+    const i = S.sfx('click', forced === undefined ? undefined : { variant: forced });
+    if (i === false) return;
+    flash(acq, 90);
+    if (varPads[i]) flash(varPads[i], 140);
+    trail.push((varPads[i] ? varPads[i].querySelector('span').textContent.split(' ')[0] : '?'));
+    if (trail.length > 16) trail.shift();
+    $('trail').innerHTML = trail.map((n, k) => k === trail.length - 1 ? '<b>' + n + '</b>' : n).join(' · ');
+  }
+  acq.addEventListener('click', () => click());
+
+  let rapid = null;
+  function stopRapid() { if (rapid) { clearInterval(rapid); rapid = null; $('rapid').setAttribute('aria-pressed', 'false'); } }
+  $('rapid').addEventListener('click', () => {
+    if (rapid) { stopRapid(); return; }
+    $('rapid').setAttribute('aria-pressed', 'true');
+    rapid = setInterval(() => click(), 140);
+  });
+
   function syncTint() {
     const p = S.getSfxPhase();
-    tintBtns.forEach((b, i) => b.setAttribute('aria-pressed', i === p ? 'true' : 'false'));
+    tintBtns.forEach(b => b.setAttribute('aria-pressed', +b.dataset.p === p ? 'true' : 'false'));
     $('tint-out').textContent = 'Phase ' + ROMAN[p];
+    buildKit(p);
   }
+  syncTint();
 
   // Controls
   const ticks = Array.from(document.querySelectorAll('#ticks span'));
@@ -352,7 +442,7 @@
 
   document.addEventListener('keydown', e => {
     if (e.target.matches('input')) return;
-    if (e.code === 'Space') { e.preventDefault(); stopTour(); S.stop(); }
+    if (e.code === 'Space') { e.preventDefault(); stopTour(); stopRapid(); S.stop(); }
     const n = parseInt(e.key, 10);
     if (n >= 0 && n <= 6) { stopTour(); S.play('phase' + n); }
   });
