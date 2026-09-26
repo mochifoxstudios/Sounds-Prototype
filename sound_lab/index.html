@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Operator Sound Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Single dark look on purpose: this is the game's own terminal world. */
+  :root {
+    color-scheme: dark;
+    --ground: #0b0f14;
+    --panel: #111922;
+    --raised: #17212c;
+    --line: #243140;
+    --line-hi: #34465a;
+    --text: #d6e0ea;
+    --dim: #8697a9;
+    --faint: #56677a;
+    --amber: #f0a640;
+    --amber-dim: #7a5626;
+    --live: #ff5a4e;
+    --ph0: #8a9bb0; --ph1: #5cc7a9; --ph2: #4f9fe6; --ph3: #b08ef2;
+    --ph4: #e3c55b; --ph5: #e67c50; --ph6: #ff5fa8;
+    --display: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif;
+    --body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--ground); }
+  body {
+    margin: 0; color: var(--text); font: 15px/1.5 var(--body);
+    padding-inline: 16px; padding-block: 0 64px;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  /* ── Transport ──────────────────────────────────────────── */
+  .transport {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+    margin-inline: -16px; padding: 14px 16px 12px;
+    background: color-mix(in srgb, var(--ground) 92%, transparent);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+  }
+  .transport .wrap { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(200px, 1.3fr) auto; gap: 18px; align-items: center; }
+  .brand { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .brand h1 { font-size: 1.05rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber); font-weight: 700; }
+  .now { font-family: var(--mono); font-size: 0.82rem; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .now b { color: var(--text); font-weight: 500; }
+  .now .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); margin-right: 7px; vertical-align: 1px; }
+  .now.on .dot { background: var(--live); box-shadow: 0 0 8px var(--live); animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0.35; } }
+  .scope { width: 100%; height: 56px; display: block; border: 1px solid var(--line); border-radius: 4px; background: #070a0e; }
+  .tbtns { display: flex; gap: 8px; }
+  .tbtn {
+    border: 1px solid var(--line-hi); background: var(--raised); border-radius: 4px;
+    padding: 9px 14px; cursor: pointer; font-family: var(--display); font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.78rem;
+  }
+  .tbtn:hover { border-color: var(--amber-dim); }
+  .tbtn.primary { border-color: var(--amber); color: var(--amber); }
+  .tbtn[aria-pressed="true"] { background: var(--amber); color: #1a1206; border-color: var(--amber); }
+
+  /* ── Mixer strip ────────────────────────────────────────── */
+  .mixer {
+    display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 24px;
+    padding: 18px 0 8px; border-bottom: 1px solid var(--line);
+  }
+  .ctl label { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.74rem; color: var(--dim); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+  .ctl label output { color: var(--text); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--amber); margin: 0; }
+  .ticks { position: relative; height: 30px; font-family: var(--mono); font-size: 0.66rem; color: var(--faint); margin-top: 4px; }
+  .ticks span { position: absolute; transform: translateX(-50%); text-align: center; white-space: nowrap; line-height: 1.3; }
+  .ticks span::before { content: ''; display: block; width: 1px; height: 5px; background: var(--line-hi); margin: 0 auto 2px; }
+  .ticks .hot { color: var(--live); }
+  .seg { display: flex; border: 1px solid var(--line-hi); border-radius: 4px; overflow: hidden; }
+  .seg button { flex: 1; padding: 7px 0; background: var(--panel); border: 0; border-right: 1px solid var(--line); cursor: pointer; font-family: var(--mono); font-size: 0.78rem; color: var(--dim); }
+  .seg button:last-child { border-right: 0; }
+  .seg button[aria-pressed="true"] { color: #0b0f14; background: var(--c, var(--amber)); }
+  .hint { font-size: 0.74rem; color: var(--faint); margin: 6px 0 0; }
+
+  /* ── Sections ───────────────────────────────────────────── */
+  section { padding-top: 34px; }
+  .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .sec-head h2 { font-size: 0.86rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+  .sec-head p { margin: 0; color: var(--faint); font-size: 0.84rem; max-width: 62ch; }
+
+  /* Story phases: a real sequence, so it reads left to right like a timeline. */
+  .phases { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .phase {
+    --c: var(--ph0);
+    text-align: left; background: var(--panel); border: 0; border-right: 1px solid var(--line);
+    padding: 14px 14px 16px; cursor: pointer; display: flex; flex-direction: column; gap: 8px; min-height: 250px;
+    position: relative; transition: background 0.2s;
+  }
+  .phase:last-child { border-right: 0; }
+  .phase:hover { background: var(--raised); }
+  .phase .num { font-family: var(--display); font-weight: 700; font-size: 1.9rem; line-height: 1; color: var(--c); }
+  .phase .ch { font-family: var(--display); font-weight: 600; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.25; }
+  .phase .sub { font-size: 0.76rem; color: var(--dim); font-style: italic; line-height: 1.4; }
+  .phase .bl { font-size: 0.78rem; color: var(--faint); line-height: 1.45; margin-top: auto; }
+  .phase .meta { font-family: var(--mono); font-size: 0.68rem; color: var(--faint); }
+  .phase.playing { background: color-mix(in srgb, var(--c) 12%, var(--panel)); box-shadow: inset 0 -3px 0 var(--c); }
+  .phase.playing .meta { color: var(--c); }
+
+  .two { display: grid; grid-template-columns: 1fr 1.6fr; gap: 28px; }
+  .cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+  .card {
+    text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 5px;
+  }
+  .card:hover { border-color: var(--line-hi); background: var(--raised); }
+  .card h3 { font-size: 0.95rem; font-weight: 600; letter-spacing: 0.02em; display: flex; justify-content: space-between; gap: 8px; }
+  .card h3 .eq { display: none; gap: 2px; align-items: flex-end; height: 12px; }
+  .card h3 .eq i { width: 3px; background: var(--amber); animation: eq 0.9s ease-in-out infinite; }
+  .card h3 .eq i:nth-child(2) { animation-delay: -0.3s; } .card h3 .eq i:nth-child(3) { animation-delay: -0.6s; }
+  @keyframes eq { 0%, 100% { height: 3px; } 50% { height: 12px; } }
+  .card p { margin: 0; font-size: 0.8rem; color: var(--dim); line-height: 1.45; }
+  .card .meta { font-family: var(--mono); font-size: 0.68rem; color: var(--faint); margin-top: auto; padding-top: 4px; }
+  .card.playing { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 7%, var(--panel)); }
+  .card.playing h3 .eq { display: flex; }
+
+  /* Pads: one-shots are hit, not selected, so they look like a sampler. */
+  .pads { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .pad {
+    background: var(--raised); border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 5px;
+    padding: 10px 12px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 3px; min-height: 64px;
+    transition: transform 0.06s, border-color 0.2s;
+  }
+  .pad:hover { border-color: var(--line-hi); }
+  .pad:active, .pad.hit { transform: translateY(2px); border-bottom-width: 1px; border-color: var(--amber); }
+  .pad b { font-family: var(--display); font-weight: 600; font-size: 0.84rem; letter-spacing: 0.03em; }
+  .pad span { font-size: 0.72rem; color: var(--faint); line-height: 1.35; }
+  .pad kbd { font-family: var(--mono); font-size: 0.64rem; color: var(--amber-dim); }
+
+  footer { margin-top: 44px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--faint); font-size: 0.78rem; font-family: var(--mono); line-height: 1.7; }
+  footer code { color: var(--dim); }
+
+  @media (max-width: 980px) {
+    .phases { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .phase { min-height: 0; border-bottom: 1px solid var(--line); }
+    .two { grid-template-columns: 1fr; }
+    .mixer { grid-template-columns: 1fr 1fr; }
+    .mixer .ctl:first-child { grid-column: 1 / -1; }
+  }
+  @media (max-width: 640px) {
+    .transport .wrap { grid-template-columns: 1fr auto; }
+    .scope { grid-column: 1 / -1; grid-row: 2; height: 44px; }
+    .phases { grid-template-columns: 1fr 1fr; }
+    .phase .bl { display: none; }
+    .mixer { grid-template-columns: 1fr; }
+    .ticks { font-size: 0.6rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .now.on .dot, .card h3 .eq i { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="transport">
+  <div class="wrap">
+    <div class="brand">
+      <h1>Operator Sound Lab</h1>
+      <div class="now" id="now"><span class="dot"></span><span id="now-text">Silent. Pick any cue to start the audio.</span></div>
+    </div>
+    <canvas class="scope" id="scope" aria-label="Output waveform"></canvas>
+    <div class="tbtns">
+      <button class="tbtn" id="tour" aria-pressed="false" title="Play Phase 0 to VI in order, 30 seconds each">Story tour</button>
+      <button class="tbtn primary" id="stop" title="Stop the music (Space)">Stop</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="mixer">
+    <div class="ctl">
+      <label for="instab">Instability <output id="instab-out">0%</output></label>
+      <input type="range" id="instab" min="0" max="100" value="0">
+      <div class="ticks" aria-hidden="true">
+        <span style="left:30%">30<br>heartbeat</span>
+        <span style="left:50%">50<br>ticking</span>
+        <span style="left:70%">70<br>whine</span>
+        <span class="hot" style="left:90%">90<br>redline</span>
+      </div>
+      <p class="hint">Only the story phases react. Screens and events ignore instability, the way the Eye of the Storm freezes it at 0.</p>
+    </div>
+    <div class="ctl">
+      <label>SFX colour <output id="tint-out">Phase 0</output></label>
+      <div class="seg" id="tint" role="group" aria-label="Which story phase the sound effects are tinted for"></div>
+      <p class="hint">Follows the phase you play. Set it here to hear one click across all seven.</p>
+    </div>
+    <div class="ctl">
+      <label for="vol">Master <output id="vol-out">85</output></label>
+      <input type="range" id="vol" min="0" max="100" value="85">
+      <p class="hint">Space stops the music. Keys 0–6 play the phases.</p>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <h2>Story phases</h2>
+      <p>One theme per chapter, heavier as the story goes on. The same five-note Operator motif turns up in every one; listen for it.</p>
+    </div>
+    <div class="phases" id="phases"></div>
+  </section>
+
+  <section class="two">
+    <div>
+      <div class="sec-head"><h2>Screens</h2></div>
+      <div class="cards" id="screens"></div>
+    </div>
+    <div>
+      <div class="sec-head"><h2>Event music</h2><p>Takes over from the phase theme while the event runs.</p></div>
+      <div class="cards" id="events"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Stingers</h2>
+      <p>One-shots that play over whatever is running. The music ducks underneath them.</p>
+    </div>
+    <div class="pads" id="stingers"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Sound effects</h2>
+      <p>Interface and gameplay sounds. The ones in the key of the phase change with the SFX colour above.</p>
+    </div>
+    <div class="pads" id="sfx"></div>
+  </section>
+
+  <footer>
+    Everything is generated live with the Web Audio API. There are no audio files.<br>
+    Engine: <code>sound_lab/soundtrack.js</code>. It is not connected to the game.
+  </footer>
+</main>
+
+<script src="soundtrack.js"></script>
+<script>
+(function () {
+  const S = window.Soundtrack;
+  const ROMAN = ['0', 'I', 'II', 'III', 'IV', 'V', 'VI'];
+  const $ = id => document.getElementById(id);
+  const cues = S.cues();
+  const cards = {};
+
+  function meta(c) { return c.bpm + ' BPM · ' + c.key; }
+
+  // Phases
+  cues.filter(c => c.group === 'phase').sort((a, b) => a.phase - b.phase).forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'phase';
+    b.style.setProperty('--c', 'var(--ph' + c.phase + ')');
+    b.innerHTML = '<span class="num">' + ROMAN[c.phase] + '</span>' +
+      '<span class="ch">' + c.chapter + '</span>' +
+      (c.sub ? '<span class="sub">' + c.sub + '</span>' : '<span class="sub">Before any transmission has been read.</span>') +
+      '<span class="bl">' + c.blurb + '</span>' +
+      '<span class="meta">' + meta(c) + '</span>';
+    b.addEventListener('click', () => { stopTour(); S.play(c.id); });
+    $('phases').appendChild(b);
+    cards[c.id] = b;
+  });
+
+  // Screens + events
+  function card(c, host) {
+    const b = document.createElement('button');
+    b.className = 'card';
+    b.innerHTML = '<h3><span>' + c.title + '</span><span class="eq"><i></i><i></i><i></i></span></h3>' +
+      '<p>' + c.blurb + '</p><span class="meta">' + meta(c) + '</span>';
+    b.addEventListener('click', () => { stopTour(); S.play(c.id); });
+    host.appendChild(b);
+    cards[c.id] = b;
+  }
+  cues.filter(c => c.group === 'screen').forEach(c => card(c, $('screens')));
+  cues.filter(c => c.group === 'event').forEach(c => card(c, $('events')));
+
+  // Pads
+  function pads(list, host, fire) {
+    list.forEach(x => {
+      const b = document.createElement('button');
+      b.className = 'pad';
+      b.innerHTML = '<b>' + x.title + '</b><span>' + x.blurb + '</span>';
+      b.addEventListener('click', () => {
+        fire(x.id);
+        b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 120);
+      });
+      host.appendChild(b);
+    });
+  }
+  pads(S.stingers(), $('stingers'), id => S.stinger(id));
+  pads(S.sfxList(), $('sfx'), id => S.sfx(id));
+
+  // SFX tint
+  const tintBtns = ROMAN.map((r, i) => {
+    const b = document.createElement('button');
+    b.textContent = r;
+    b.style.setProperty('--c', 'var(--ph' + i + ')');
+    b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+    b.setAttribute('aria-label', 'Phase ' + r);
+    b.addEventListener('click', () => { S.setSfxPhase(i); syncTint(); S.sfx('click'); });
+    $('tint').appendChild(b);
+    return b;
+  });
+  function syncTint() {
+    const p = S.getSfxPhase();
+    tintBtns.forEach((b, i) => b.setAttribute('aria-pressed', i === p ? 'true' : 'false'));
+    $('tint-out').textContent = 'Phase ' + ROMAN[p];
+  }
+
+  // Controls
+  $('instab').addEventListener('input', e => { S.setIntensity(e.target.value / 100); $('instab-out').textContent = e.target.value + '%'; });
+  $('vol').addEventListener('input', e => { S.setVolume('master', e.target.value / 100); $('vol-out').textContent = e.target.value; });
+  $('stop').addEventListener('click', () => { stopTour(); S.stop(); });
+
+  // Story tour: phases 0 -> VI, a stinger at every chapter change.
+  let tourTimer = null, tourIdx = 0;
+  function tourStep() {
+    if (tourIdx > 6) { stopTour(); return; }
+    if (tourIdx > 0) S.stinger('phaseAdvance');
+    S.play('phase' + tourIdx, { fade: 0.8 });
+    tourIdx++;
+    tourTimer = setTimeout(tourStep, 30000);
+  }
+  function stopTour() {
+    if (!tourTimer) return;
+    clearTimeout(tourTimer); tourTimer = null;
+    $('tour').setAttribute('aria-pressed', 'false');
+  }
+  $('tour').addEventListener('click', () => {
+    if (tourTimer) { stopTour(); return; }
+    tourIdx = 0; $('tour').setAttribute('aria-pressed', 'true'); tourStep();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.target.matches('input')) return;
+    if (e.code === 'Space') { e.preventDefault(); stopTour(); S.stop(); }
+    const n = parseInt(e.key, 10);
+    if (n >= 0 && n <= 6) { stopTour(); S.play('phase' + n); }
+  });
+
+  // Live readout + scope
+  const cv = $('scope'), g = cv.getContext('2d');
+  let buf = null, lastName = null;
+  function frame() {
+    const np = S.nowPlaying();
+    const name = np ? np.name : null;
+    if (name !== lastName) {
+      Object.keys(cards).forEach(id => cards[id].classList.toggle('playing', id === name));
+      $('now').classList.toggle('on', !!np);
+      lastName = name;
+      syncTint();
+    }
+    $('now-text').innerHTML = np
+      ? '<b>' + np.title + '</b> · bar ' + np.bar + '.' + np.beat + ' · ' + np.bpm + ' BPM'
+      : 'Silent. Pick any cue to start the audio.';
+
+    const w = cv.clientWidth, h = cv.clientHeight, dpr = window.devicePixelRatio || 1;
+    if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+    g.strokeStyle = '#1b2632'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
+    const an = S.analyser && S.analyser();
+    if (an) {
+      if (!buf) buf = new Float32Array(an.fftSize);
+      an.getFloatTimeDomainData(buf);
+      g.strokeStyle = '#f0a640'; g.lineWidth = 1.5;
+      g.shadowColor = 'rgba(240,166,64,0.6)'; g.shadowBlur = 6;
+      g.beginPath();
+      const step = buf.length / w;
+      for (let x = 0; x < w; x++) {
+        const v = buf[Math.floor(x * step)] || 0;
+        const y = h / 2 - v * h * 0.9;
+        x ? g.lineTo(x, y) : g.moveTo(x, y);
+      }
+      g.stroke(); g.shadowBlur = 0;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
