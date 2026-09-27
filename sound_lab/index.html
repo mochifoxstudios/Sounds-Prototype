@@ -111,7 +111,7 @@
   .phase.playing { background: color-mix(in srgb, var(--c) 12%, var(--panel)); box-shadow: inset 0 -3px 0 var(--c); }
   .phase.playing .meta { color: var(--c); }
 
-  .two { display: grid; grid-template-columns: 1fr 1.6fr; gap: 28px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
   .cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
   .card {
     text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
@@ -161,6 +161,40 @@
   .acq-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .trail { font-family: var(--mono); font-size: 0.8rem; color: var(--dim); letter-spacing: 0.08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
   .trail b { color: var(--kc, var(--amber)); font-weight: 500; }
+
+  .subgroup + .subgroup { margin-top: 22px; }
+  .subgroup h3 { font-family: var(--mono); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin: 0 0 10px; display: flex; gap: 10px; align-items: baseline; }
+  .subgroup h3 span { color: var(--line-hi); }
+
+  /* Coverage table */
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .cov-tools { margin-bottom: 12px; }
+  .cov-tools input {
+    width: 100%; max-width: 360px; background: var(--panel); border: 1px solid var(--line-hi); border-radius: 4px;
+    padding: 9px 12px; color: var(--text); font: 0.86rem var(--body);
+  }
+  .cov-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  .cov { width: 100%; border-collapse: collapse; font-size: 0.84rem; min-width: 640px; }
+  .cov th { text-align: left; font-family: var(--mono); font-weight: 500; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; }
+  .cov td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .cov tr:last-child td { border-bottom: 0; }
+  .cov tr.area td { background: var(--raised); font-family: var(--display); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.74rem; color: var(--dim); padding-block: 7px; }
+  .cov td.src { font-family: var(--mono); font-size: 0.72rem; color: var(--faint); }
+  .cov td.note { color: var(--faint); font-size: 0.78rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    font-family: var(--mono); font-size: 0.7rem; padding: 3px 8px; border-radius: 3px; cursor: pointer;
+    border: 1px solid var(--line-hi); background: var(--panel); color: var(--text);
+  }
+  .chip:hover { border-color: var(--amber-dim); }
+  .chip.cue { border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); }
+  .chip.stinger { border-color: color-mix(in srgb, var(--ph3) 45%, var(--line)); }
+  .chip.sfx { border-color: color-mix(in srgb, var(--ph1) 40%, var(--line)); }
+  .chip i { font-style: normal; color: var(--faint); margin-right: 6px; }
+  .chip.layer { border-color: color-mix(in srgb, var(--live) 45%, var(--line)); }
+  .chip.bad { border-color: var(--live); color: var(--live); }
+  .chip.none { cursor: default; color: var(--faint); border-style: dashed; }
+  .legend { display: inline-flex; gap: 12px; flex-wrap: wrap; font-family: var(--mono); font-size: 0.7rem; color: var(--faint); margin-left: 8px; }
 
   footer { margin-top: 44px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--faint); font-size: 0.78rem; font-family: var(--mono); line-height: 1.7; }
   footer code { color: var(--dim); }
@@ -264,9 +298,17 @@
       <div class="cards" id="screens"></div>
     </div>
     <div>
-      <div class="sec-head"><h2>Event music</h2><p>Takes over from the phase theme while the event runs.</p></div>
-      <div class="cards" id="events"></div>
+      <div class="sec-head"><h2>Lore moods</h2><p>Under a transmission. The game already tags each chunk with one of these moods.</p></div>
+      <div class="cards" id="lore"></div>
     </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Event music</h2>
+      <p>Takes over from the phase theme while the event runs, then hands back.</p>
+    </div>
+    <div id="events"></div>
   </section>
 
   <section>
@@ -274,7 +316,7 @@
       <h2>Stingers</h2>
       <p>One-shots that play over whatever is running. The music ducks underneath them.</p>
     </div>
-    <div class="pads" id="stingers"></div>
+    <div id="stingers"></div>
   </section>
 
   <section>
@@ -283,6 +325,18 @@
       <p>Interface and gameplay sounds. The ones in the key of the phase change with the SFX colour above.</p>
     </div>
     <div class="pads" id="sfx"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Event coverage</h2>
+      <p id="cov-sum">Every event in the game, from the codebase summary, and what it plays. Tap a sound to hear it.</p>
+    </div>
+    <div class="cov-tools">
+      <label for="cov-q" class="sr">Filter events</label>
+      <input id="cov-q" type="search" placeholder="Filter: duck, boss, redline…" autocomplete="off">
+    </div>
+    <div class="cov-wrap"><table class="cov" id="cov"></table></div>
   </section>
 
   <footer>
@@ -328,7 +382,22 @@
     cards[c.id] = b;
   }
   cues.filter(c => c.group === 'screen').forEach(c => card(c, $('screens')));
-  cues.filter(c => c.group === 'event').forEach(c => card(c, $('events')));
+  cues.filter(c => c.group === 'lore').forEach(c => card(c, $('lore')));
+
+  // Grouped blocks: a small heading, then cards or pads.
+  function subgroup(host, label, count, cls) {
+    const g = document.createElement('div'); g.className = 'subgroup';
+    g.innerHTML = '<h3>' + label + ' <span>' + count + '</span></h3>';
+    const inner = document.createElement('div'); inner.className = cls; g.appendChild(inner);
+    host.appendChild(g);
+    return inner;
+  }
+  const EVENT_CATS = [['encounter', 'Encounters'], ['boss', 'Bosses'], ['world', 'World events'], ['mode', 'Modes']];
+  EVENT_CATS.forEach(([cat, label]) => {
+    const list = cues.filter(c => c.group === 'event' && c.cat === cat);
+    const host = subgroup($('events'), label, list.length, 'cards');
+    list.forEach(c => card(c, host));
+  });
 
   // Pads
   function pads(list, host, fire) {
@@ -343,7 +412,64 @@
       host.appendChild(b);
     });
   }
-  pads(S.stingers(), $('stingers'), id => S.stinger(id));
+  const STING_CATS = [['story', 'Story'], ['event', 'Events'], ['reward', 'Rewards'], ['instability', 'Instability']];
+  STING_CATS.forEach(([cat, label]) => {
+    const list = S.stingers().filter(x => x.cat === cat);
+    pads(list, subgroup($('stingers'), label, list.length, 'pads'), id => S.stinger(id));
+  });
+
+  // Coverage table
+  const cov = S.coverage();
+  const KIND = { cue: 'music', stinger: 'stinger', sfx: 'sfx', layer: 'layer' };
+  const titleOf = {};
+  cues.forEach(c => { titleOf['cue:' + c.id] = c.title; });
+  S.stingers().forEach(c => { titleOf['stinger:' + c.id] = c.title; });
+  S.sfxList().forEach(c => { titleOf['sfx:' + c.id] = c.title; });
+  titleOf['layer:instability'] = 'Instability layer (plays Phase III at 90%)';
+  function fire(ref) {
+    const [k, id] = ref.split(':');
+    if (k === 'layer') {
+      stopTour();
+      const np = S.nowPlaying();
+      if (!np || np.group !== 'phase') S.play('phase3');
+      $('instab').value = 90; $('instab').dispatchEvent(new Event('input'));
+    }
+    else if (k === 'cue') { stopTour(); S.play(id); }
+    else if (k === 'stinger') S.stinger(id);
+    else S.sfx(id);
+  }
+  const table = $('cov');
+  table.innerHTML = '<thead><tr><th>Event</th><th>In the code</th><th>Sound</th><th>Note</th></tr></thead>';
+  const tbody = document.createElement('tbody'); table.appendChild(tbody);
+  let lastArea = null, bad = 0, silent = 0;
+  const rows = [];
+  cov.forEach(r => {
+    if (r.area !== lastArea) {
+      const a = document.createElement('tr'); a.className = 'area';
+      a.innerHTML = '<td colspan="4">' + r.area + '</td>'; tbody.appendChild(a);
+      a._area = r.area; rows.push(a); lastArea = r.area;
+    }
+    const tr = document.createElement('tr');
+    const chips = r.sounds.length ? r.sounds.map(ref => {
+      const ok = S.has(ref); if (!ok) bad++;
+      const k = ref.split(':')[0];
+      return '<button class="chip ' + (ok ? k : 'bad') + '" data-ref="' + ref + '" title="' + KIND[k] + '"><i>' + KIND[k] + '</i>' + (titleOf[ref] || ref) + '</button>';
+    }).join('') : '<span class="chip none">silent</span>';
+    if (!r.sounds.length) silent++;
+    tr.innerHTML = '<td>' + r.event + '</td><td class="src">' + r.source + '</td><td><div class="chips">' + chips + '</div></td><td class="note">' + r.note + '</td>';
+    tr._text = (r.area + ' ' + r.event + ' ' + r.source + ' ' + r.note + ' ' + r.sounds.join(' ')).toLowerCase();
+    tr._area = r.area;
+    tbody.appendChild(tr); rows.push(tr);
+  });
+  table.addEventListener('click', e => { const b = e.target.closest('.chip[data-ref]'); if (b && S.has(b.dataset.ref)) fire(b.dataset.ref); });
+  $('cov-sum').innerHTML = cov.length + ' events. ' + (cov.length - silent) + ' have sound, ' + silent + ' are silent on purpose' +
+    (bad ? ', <b style="color:var(--live)">' + bad + ' point at sounds that do not exist</b>' : '') + '. Tap a sound to hear it.';
+  $('cov-q').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    const shownAreas = new Set();
+    rows.forEach(tr => { if (tr.className !== 'area') { const on = !q || tr._text.indexOf(q) >= 0; tr.hidden = !on; if (on) shownAreas.add(tr._area); } });
+    rows.forEach(tr => { if (tr.className === 'area') tr.hidden = !shownAreas.has(tr._area); });
+  });
   pads(S.sfxList().filter(x => x.id !== 'click'), $('sfx'), id => S.sfx(id));
 
   // SFX tint: two phase selectors (mixer + ACQUIRE section) that stay in sync.

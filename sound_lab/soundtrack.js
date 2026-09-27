@@ -220,7 +220,7 @@
         const end = t + dur + 0.1, g = chain(D, o);
         const c = ctx.createOscillator(), m = ctx.createOscillator(), mg = ctx.createGain();
         c.frequency.value = f; m.frequency.value = f * (o.ratio || 3.5);
-        if (D.warp) c.detune.value = warpCents();
+        c.detune.value = (o.det || 0) + (D.warp ? warpCents() : 0);
         const idx = (o.idx !== undefined ? o.idx : 2.5) * f;
         mg.gain.setValueAtTime(idx, t);
         mg.gain.exponentialRampToValueAtTime(Math.max(1, idx * 0.04), t + dur * 0.6);
@@ -566,7 +566,7 @@
     };
 
     CUES.lore = {
-        group: 'screen', title: 'Lore cutscene', key: 'C minor', bpm: 60, root: 48, echoSteps: 3,
+        group: 'lore', mood: 'default', title: 'Neutral', key: 'C minor', bpm: 60, root: 48, echoSteps: 3,
         blurb: 'Underscore for a transmission. Soft felt-piano chords that stay out of the way of the text.',
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4, sc = SC.minor, R = 48;
@@ -809,7 +809,7 @@
     // ── Events ──
 
     CUES.duckTribunal = {
-        group: 'event', title: 'Duck Tribunal', key: 'B♭ major', bpm: 116, root: 46, echoSteps: 2,
+        group: 'event', cat: 'encounter', title: 'Duck Tribunal', key: 'B♭ major', bpm: 116, root: 46, echoSteps: 2,
         blurb: 'A pompous courtroom march played by ducks. Oom-pah tuba, a snare, a quacking lead and a gavel.',
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4, sc = SC.major, R = 46;
@@ -830,7 +830,7 @@
     };
 
     CUES.nullInterrogation = {
-        group: 'event', title: 'NULL interrogation', key: 'A drone', bpm: 50, root: 33, echoSteps: 4,
+        group: 'event', cat: 'encounter', title: 'NULL interrogation', key: 'A drone', bpm: 50, root: 33, echoSteps: 4,
         blurb: 'Near-silence while the Entity asks why you click. A beating drone, a breath, one high tone bending flat.',
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4;
@@ -846,7 +846,7 @@
     };
 
     CUES.eyeOfStorm = {
-        group: 'event', title: 'Eye of the Storm', key: 'G major', bpm: 60, root: 55, echoSteps: 3,
+        group: 'event', cat: 'mode', title: 'Eye of the Storm', key: 'G major', bpm: 60, root: 55, echoSteps: 3,
         blurb: 'Sixty seconds of peace. Open major chords, slow bells, birdsong. The only place instability does not reach.',
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4, sc = SC.major, R = 55;
@@ -867,7 +867,7 @@
     };
 
     CUES.redline = {
-        group: 'event', title: 'Redline', key: 'E', bpm: 140, root: 28, echoSteps: 3,
+        group: 'event', cat: 'mode', title: 'Redline', key: 'E', bpm: 140, root: 28, echoSteps: 3,
         blurb: 'Eight bars arming, the filter prying open under a riser. Then ×10: full drums and a siren. Pair with the Core Collapse stinger.',
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4, R = 28;
@@ -888,7 +888,7 @@
     };
 
     CUES.memoryLeak = {
-        group: 'event', title: 'Memory Leak', key: 'A minor', bpm: 128, root: 57, echoSteps: 2,
+        group: 'event', cat: 'boss', title: 'Memory Leak', key: 'A minor', bpm: 128, root: 57, echoSteps: 2, vol: 1.7,
         blurb: 'A one-bar chiptune loop that corrupts as the leak spreads: stuck notes, wrong pitches, dropouts, garbage data.',
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4;
@@ -910,7 +910,7 @@
     };
 
     CUES.captcha = {
-        group: 'event', title: 'CAPTCHA', key: 'F major', bpm: 100, root: 53, swing: 0.18, echoSteps: 3,
+        group: 'event', cat: 'encounter', title: 'CAPTCHA', key: 'F major', bpm: 100, root: 53, swing: 0.18, echoSteps: 3,
         blurb: 'Friendly verification muzak. Bossa chords, a flute, a shaker. Every so often a chord comes out a semitone wrong.',
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4, sc = SC.major, R = 53;
@@ -935,7 +935,7 @@
     };
 
     CUES.prisonersDilemma = {
-        group: 'event', title: "Prisoner's Dilemma", key: 'D minor', bpm: 88, root: 50, echoSteps: 3,
+        group: 'event', cat: 'encounter', title: "Prisoner's Dilemma", key: 'D minor', bpm: 88, root: 50, echoSteps: 3,
         blurb: 'Two players, one decision. Pizzicato calls hard left, answers hard right, a clock in the middle.',
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4, sc = SC.minor, R = 50;
@@ -956,7 +956,7 @@
     };
 
     CUES.existentialCrisis = {
-        group: 'event', title: 'Existential Crisis', key: 'A, unresolved', bpm: 54, root: 45, echoSteps: 4,
+        group: 'event', cat: 'encounter', title: 'Existential Crisis', key: 'A, unresolved', bpm: 54, root: 45, echoSteps: 4,
         blurb: 'Nothing resolves. Chords that never land, reversed swells, a detuned choir.',
         step(P, s, t) {
             const pos = s % 16, R = 57;
@@ -973,7 +973,7 @@
     };
 
     CUES.anomalyBoss = {
-        group: 'event', title: 'Anomaly Boss', key: 'E phrygian', bpm: 152, root: 40, echoSteps: 2,
+        group: 'event', cat: 'boss', title: 'Anomaly Boss', key: 'E phrygian', bpm: 152, root: 40, echoSteps: 2,
         blurb: 'Reality Breach. A boss fight: distorted riff, driving kick, alarm stabs, a build every eighth bar.',
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4, R = 40;
@@ -994,7 +994,7 @@
     };
 
     CUES.minigameDecoy = {
-        group: 'event', title: 'Minigame Decoy', key: 'C major', bpm: 136, root: 60, echoSteps: 2,
+        group: 'event', cat: 'encounter', title: 'Minigame Decoy', key: 'C major', bpm: 136, root: 60, echoSteps: 2,
         blurb: 'A cheerful little chiptune for tic-tac-toe. Leave it running: a low drone creeps in underneath while the game drains you.',
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4, sc = SC.major, R = 60;
@@ -1018,7 +1018,7 @@
     };
 
     CUES.bios = {
-        group: 'event', title: 'BIOS screen', key: 'PC speaker', bpm: 120, root: 72, echoSteps: 2, vol: 0.9,
+        group: 'event', cat: 'encounter', title: 'BIOS screen', key: 'PC speaker', bpm: 120, root: 72, echoSteps: 2, vol: 3,
         blurb: 'The hidden layer. One square wave, dry, like a motherboard speaker. A POST beep every four bars.',
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4;
@@ -1029,7 +1029,7 @@
     };
 
     CUES.quarantine = {
-        group: 'event', title: 'Quarantine', key: 'B, tritone', bpm: 80, root: 35, echoSteps: 3,
+        group: 'event', cat: 'encounter', title: 'Quarantine', key: 'B, tritone', bpm: 80, root: 35, echoSteps: 3,
         blurb: 'Toxic storage. A resonant tritone drone, bubbling blips, a slow muffled pulse.',
         step(P, s, t) {
             const pos = s % 16, bar = s >> 4, R = 35;
@@ -1045,10 +1045,456 @@
         },
     };
 
+    // ── World events (WorldEvents: one at a time, 30–60 s each) ──
+
+    CUES.quantumSurge = {
+        group: 'event', cat: 'world', title: 'Quantum Surge', key: 'A major', bpm: 128, root: 57, echoSteps: 3,
+        blurb: '+300% throughput. Everything lifts: a climbing bell arpeggio, a filter that keeps opening, four-on-the-floor.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.major, R = 57;
+            const lift = Math.min(1, bar / 8);
+            const cd = [0, 4, 5, 3][(bar >> 1) % 4];
+            if (pos === 0 && bar % 2 === 0) P.pad(t, triad(R, sc, cd).concat([dg(R + 12, sc, cd + 2)]), P.sd * 32, { lp: 1200 + lift * 2800, a: 0.3, r: 0.8, vol: 0.1 });
+            P.bell(t, M(dg(R + 12, sc, cd + [0, 2, 4, 7, 9, 11, 14, 11][pos % 8] + (pos >= 8 ? 7 : 0))), 0.35, { ratio: 3.5, idx: 1.4, vol: 0.035, rev: 0.3, echo: 0.2, pan: pos % 2 ? 0.3 : -0.3 });
+            if (pos % 4 === 0) P.kick(t, { vol: 0.5, f0: 150 });
+            if (pos % 4 === 2) P.hat(t, { vol: 0.05, open: true });
+            if (pos === 4 || pos === 12) P.clap(t, { vol: 0.14 });
+            if (pos % 2 === 0) P.tone(t, M(dg(R - 12, sc, cd) + (pos % 4 ? 12 : 0)), 0.14, { type: 'sawtooth', lp: 600 + lift * 1200, vol: 0.12, rev: 0 });
+            if (pos === 0 && bar % 4 === 3) P.riser(t, P.sd * 16, { vol: 0.05 });
+        },
+    };
+
+    CUES.dataStorm = {
+        group: 'event', cat: 'world', title: 'Data Storm', key: 'D minor', bpm: 136, root: 50, echoSteps: 3,
+        blurb: 'Energy orbs rain down. Chattering data blips everywhere, gusts of noise, thunder every fourth bar.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.minor, R = 50;
+            if (P.chance(0.7)) P.tone(t, M(dg(R + 24, sc, Math.floor(P.rnd() * 10))), 0.03, { type: 'square', lp: 5000, vol: 0.022, rev: 0.2, pan: P.rnd() * 1.8 - 0.9 });
+            if ([0, 3, 8, 11].indexOf(pos) >= 0) P.kick(t, { vol: 0.5, f0: 140 });
+            if (pos === 4 || pos === 12) P.snare(t, { vol: 0.2 });
+            if (pos % 2 === 1) P.hat(t, { vol: 0.03 });
+            if (pos === 0) P.tone(t, M(dg(R - 12, sc, [0, 0, 5, 6][bar % 4])), P.sd * 14, { type: 'sawtooth', uni: 2, lp: 700, sus: true, a: 0.02, r: 0.2, vol: 0.12, rev: 0.1 });
+            if (pos === 0 && bar % 2 === 0) P.noise(t, P.sd * 32, { f: 500, f2: 2600, ft: P.sd * 16, q: 2, sus: true, a: 0.6, r: 0.8, vol: 0.035, rev: 0.4 });
+            if (pos === 0 && bar % 4 === 3) P.noise(t, 2.2, { type: 'lowpass', f: 900, f2: 60, vol: 0.14, rev: 0.7 });
+        },
+    };
+
+    CUES.walkerStrike = {
+        group: 'event', cat: 'world', title: 'Walker Strike', key: 'G minor', bpm: 100, root: 43, echoSteps: 2,
+        blurb: 'The city stops working. Stomp-stomp-clap, a crowd chanting two notes, brass stabs on the off-beat.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.minor, R = 43;
+            if (pos === 0 || pos === 4) P.kick(t, { vol: 0.55, f0: 110, f1: 40, d: 0.35, rev: 0.25 });
+            if (pos === 8) P.clap(t, { vol: 0.3, rev: 0.45 });
+            if (pos === 12) P.snare(t, { vol: 0.12 });
+            if (pos === 0 || pos === 8) P.choir(t, M(R + 12 + (pos === 8 ? 3 : 0)), P.sd * 6, { v: 'a', a: 0.03, r: 0.2, vol: 0.07, rev: 0.4 });
+            if (pos === 6 || pos === 14) P.pad(t, triad(R + 12, sc, [0, 5, 3, 4][bar % 4]), 0.16, { uni: 2, lp: 2200, fenv: 600, ft: 0.08, a: 0.005, r: 0.1, vol: 0.09, rev: 0.25 });
+            if (pos === 0) P.tone(t, M(R - 12), P.sd * 12, { type: 'triangle', lp: 400, sus: true, a: 0.01, r: 0.2, vol: 0.2 });
+        },
+    };
+
+    CUES.momentumCascade = {
+        group: 'event', cat: 'world', title: 'Momentum Cascade', key: 'B♭ major', bpm: 120, root: 46, echoSteps: 3,
+        blurb: 'Combo locked at OVERDRIVE. A falling arpeggio that picks up another voice every two bars until four are tumbling at once.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.major, R = 46;
+            const voices = Math.min(4, 1 + (bar >> 1));
+            const cd = [0, 5, 3, 4][bar % 4];
+            for (let v = 0; v < voices; v++) {
+                if ((pos + v * 3) % (v === 0 ? 1 : 2)) continue;
+                const d = cd + 14 - ((pos + v * 5) % 12);
+                P.bell(t, M(dg(R + 12 + v * 12, sc, d)), 0.4, { ratio: v % 2 ? 2 : 3.5, idx: 1.2, vol: 0.04 / (1 + v * 0.3), rev: 0.3, echo: 0.25, pan: [-0.5, 0.5, -0.2, 0.2][v] });
+            }
+            if (pos % 4 === 0) P.kick(t, { vol: 0.42 });
+            if (pos === 4 || pos === 12) P.clap(t, { vol: 0.12 });
+            if (pos % 2 === 0) P.tone(t, M(dg(R - 12, sc, cd)), 0.15, { type: 'triangle', lp: 900, vol: 0.14, rev: 0 });
+        },
+    };
+
+    CUES.corruptPacket = {
+        group: 'event', cat: 'world', title: 'Corrupt Packet', key: 'E, broken', bpm: 110, root: 28, echoSteps: 2,
+        blurb: 'A burst of bad data, and you lose an item. A growling bass whose filter lurches on every step, glitches through it.',
+        step(P, s, t) {
+            const pos = s % 16, R = 28;
+            const RIFF = [0, 0, 12, 0, 3, 0, 15, 12, 0, 0, 12, 7, 6, 3, 0, 1];
+            P.tone(t, M(R + RIFF[pos]), 0.11, { type: 'sawtooth', uni: 3, spread: 30, lp: 200 + P.rnd() * 2200, q: 8, vol: 0.12, rev: 0 });
+            if (pos === 0 || pos === 10) P.kick(t, { vol: 0.6, f0: 130 });
+            if (pos === 8) P.snare(t, { vol: 0.25, f: 1200 });
+            if (P.chance(0.2)) P.glitch(t, { vol: 0.035, n: 3, pan: P.rnd() * 2 - 1 });
+            if (P.chance(0.08)) P.tone(t, M(R + 48 + P.pick([0, 1, 6])), 0.05, { type: 'square', lp: 3000, vol: 0.04, rev: 0.2 });
+        },
+    };
+
+    CUES.timeFreeze = {
+        group: 'event', cat: 'world', title: 'Time Freeze', key: 'F♯, suspended', bpm: 60, root: 54, echoSteps: 4,
+        blurb: 'Passive income stops; only clicking pays. No pulse at all. Ice-glass bells hang in the air, and a clock ticks once and gets stuck.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, R = 54;
+            if (pos === 0 && bar % 4 === 0) {
+                P.pad(t, [R, R + 7, R + 14, R + 17], P.sd * 64, { type: 'triangle', uni: 2, spread: 5, lp: 3200, a: 2, r: 3, vol: 0.09, rev: 0.8 });
+                P.choir(t, M(R + 24), P.sd * 64, { v: 'u', a: 2, r: 3, vol: 0.03, rev: 0.8 });
+            }
+            if (pos % 4 === 0 && P.chance(0.45)) P.bell(t, M(R + 24 + P.pick([0, 2, 7, 9, 14, 16])), 2.8, { ratio: 4.1, idx: 1.4, vol: 0.035, rev: 0.9, echo: 0.4, pan: P.rnd() * 1.6 - 0.8 });
+            if (pos === 0 && bar % 2 === 1) {
+                P.wood(t, 2000, { vol: 0.05, rev: 0.6 });
+                P.wood(t + 0.02, 2000, { vol: 0.02, rev: 0.6 });
+            }
+        },
+    };
+
+    CUES.memoryPurge = {
+        group: 'event', cat: 'world', title: 'Memory Purge', key: 'C minor', bpm: 90, root: 48, echoSteps: 3,
+        blurb: 'Half your energy is wiped for double output. Everything drains downward: filter sweeps, falling bass, sparse notes.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.minor, R = 48;
+            if (pos === 0) P.noise(t, P.sd * 14, { f: 7000, f2: 180, q: 3, sus: true, a: 0.05, r: 0.3, vol: 0.05, rev: 0.4 });
+            if (pos === 0 && bar % 2 === 0) P.tone(t, M(R - 12), P.sd * 30, { type: 'sawtooth', uni: 2, lp: 600, glide: 0.5, gt: P.sd * 30, sus: true, a: 0.05, r: 0.3, vol: 0.12 });
+            if ([0, 6, 10].indexOf(pos) >= 0) P.tone(t, M(dg(R + 24, sc, 7 - (bar % 8) - [0, 6, 10].indexOf(pos))), 0.9, { type: 'triangle', lp: 700, fenv: 3500, ft: 0.2, vol: 0.075, rev: 0.5, echo: 0.3 });
+            if (pos === 0 || pos === 8) P.kick(t, { vol: 0.35, f0: 90, f1: 35, d: 0.6, click: false });
+        },
+    };
+
+    // ── Bosses ──
+
+    CUES.firewallBoss = {
+        group: 'event', cat: 'boss', title: 'Firewall Boss', key: 'C♯ minor', bpm: 96, root: 37, echoSteps: 2,
+        blurb: 'An invincible wall you can only beat from outside the game. Slow, crushing power chords, a klaxon, metal slamming shut.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, R = 37;
+            const ch = [0, 0, 3, -2][bar % 4];
+            if (pos === 0 || pos === 3 || pos === 8) P.pad(t, [R + ch, R + ch + 7, R + ch + 12], P.sd * 2.5, { uni: 3, spread: 16, lp: 1700, a: 0.005, r: 0.12, vol: 0.14, rev: 0.1 });
+            if (pos === 0 || pos === 3 || pos === 11) P.kick(t, { vol: 0.65, f0: 120, f1: 38, d: 0.4 });
+            if (pos === 8) P.snare(t, { vol: 0.3, rev: 0.5 });
+            if (pos === 6 || pos === 14) P.bell(t, M(R + 24), 0.5, { ratio: 1.41, idx: 6, vol: 0.05, rev: 0.4 });
+            if (pos === 0 && bar % 2 === 0) {
+                P.tone(t, 523, P.sd * 4, { type: 'square', lp: 1400, sus: true, a: 0.01, r: 0.05, vol: 0.035, rev: 0.3 });
+                P.tone(t + P.sd * 4, 440, P.sd * 4, { type: 'square', lp: 1400, sus: true, a: 0.01, r: 0.05, vol: 0.035, rev: 0.3 });
+            }
+            if (pos % 2 === 0) P.hat(t, { vol: 0.03 });
+        },
+    };
+
+    // ── Encounters ──
+
+    CUES.duckyCouncil = {
+        group: 'event', cat: 'encounter', title: 'Ducky Council', key: 'F minor', bpm: 76, root: 53, echoSteps: 3, vol: 1.9,
+        blurb: 'Five ducks deliberate on your conduct. A solemn harpsichord, and one quack a bar as each member casts a vote.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.minor, R = 53;
+            const cd = [0, 3, 4, 0, 5, 1, 4, 4][bar % 8];
+            const ch = triad(R, sc, cd);
+            const pat = [0, 1, 2, 1, 0, 2, 1, 2];
+            if (pos % 2 === 0) P.tone(t, M(ch[pat[(pos >> 1) % 8]] + 12), 0.25, { type: 'sawtooth', lp: 1800, fenv: 5500, ft: 0.03, vol: 0.05, rev: 0.3 });
+            if (pos === 0 || pos === 8) P.tone(t, M(ch[0] - 12), 0.5, { type: 'triangle', lp: 800, vol: 0.14, rev: 0.1 });
+            if (pos === 12) {
+                const who = bar % 5;
+                P.tone(t, M(R + [7, 3, 12, 5, 0][who]), 0.14, { type: 'sawtooth', bp: 1400, fenv: 700, ft: 0.06, q: 5, vol: 0.2, rev: 0.25, pan: [-0.6, -0.3, 0, 0.3, 0.6][who] });
+            }
+            if (bar % 8 === 7 && pos === 0) P.gavel(t, { vol: 0.35 });
+        },
+    };
+
+    CUES.duckRansom = {
+        group: 'event', cat: 'encounter', title: 'Duck Ransom', key: 'A minor', bpm: 96, root: 45, swing: 0.16, echoSteps: 3, vol: 1.4,
+        blurb: 'A duck has stolen one of your buttons. A sneaking walking bass, finger snaps, a muted horn, and the odd smug quack.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, R = 45;
+            const WALK = [0, 3, 4, 7, 10, 9, 7, 4];
+            if (pos % 2 === 0) P.tone(t, M(R - 12 + WALK[(pos >> 1) % 8] + (bar % 2 ? 5 : 0)), 0.2, { type: 'triangle', lp: 900, fenv: 2500, ft: 0.05, vol: 0.18, rev: 0.05 });
+            if (pos === 4 || pos === 12) P.clap(t, { vol: 0.1, rev: 0.2 });
+            if (pos % 4 === 2) P.hat(t, { vol: 0.015 });
+            if (bar % 2 === 1 && [0, 3, 6].indexOf(pos) >= 0)
+                P.tone(t, M(R + 12 + [0, 3, 6][[0, 3, 6].indexOf(pos)]), P.sd * 2, { type: 'square', bp: 1100, q: 3, sus: true, a: 0.01, r: 0.05, vol: 0.09, rev: 0.25 });
+            if (bar % 4 === 3 && pos === 10) P.tone(t, M(R + 19), 0.12, { type: 'sawtooth', bp: 1500, fenv: 700, ft: 0.05, q: 5, vol: 0.18, rev: 0.2 });
+        },
+    };
+
+    CUES.severance = {
+        group: 'event', cat: 'encounter', title: 'Severance offer', key: 'E♭ major', bpm: 88, root: 51, echoSteps: 3,
+        blurb: 'Ransom Protocol: LP and DATA if you close the game for good. HR hold music, pleasant and a little sad, with a hold beep.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.major, R = 51;
+            const cd = [0, 5, 3, 4][bar % 4];
+            const ch = [dg(R, sc, cd), dg(R, sc, cd + 2), dg(R, sc, cd + 4), dg(R, sc, cd + 6)];
+            if (pos === 0 || pos === 10) ch.forEach(n => P.tone(t, M(n + 12), 1.1, { vol: 0.04, vib: [4.5, 5], rev: 0.4 }));
+            if (pos === 0) P.tone(t, M(ch[0] - 12), 0.5, { type: 'triangle', lp: 700, vol: 0.14 });
+            if (pos === 8) P.tone(t, M(ch[2] - 12), 0.4, { type: 'triangle', lp: 700, vol: 0.12 });
+            if (pos % 4 === 0 && P.chance(0.6)) P.tone(t, M(dg(R + 24, sc, cd + P.pick([0, 2, 4, 5]))), P.sd * 3, { sus: true, a: 0.03, r: 0.2, vol: 0.05, vib: [5, 8], rev: 0.4 });
+            if (pos === 0 && bar % 4 === 3) P.tone(t + P.sd * 12, 1400, 0.18, { vol: 0.035, rev: 0.1 });
+        },
+    };
+
+    CUES.expedition = {
+        group: 'event', cat: 'encounter', title: 'Walker Expedition', key: 'D mixolydian', bpm: 104, root: 50, echoSteps: 3,
+        blurb: 'Sending walkers out past the grid for stories, not loot. A marching tom rhythm, an open drone, a wandering flute.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, R = 50;
+            const sc = [0, 2, 4, 5, 7, 9, 10];
+            if (pos === 0 && bar % 4 === 0) P.pad(t, [R - 12, R - 5, R], P.sd * 64, { type: 'triangle', uni: 2, lp: 900, a: 1, r: 1, vol: 0.09 });
+            if ([0, 3, 6, 8, 12, 14].indexOf(pos) >= 0) P.tom(t, pos % 8 === 0 ? 70 : 95, { vol: pos % 8 === 0 ? 0.3 : 0.16, d: 0.3, pan: pos % 3 ? 0.2 : -0.2 });
+            if (pos % 2 === 0 && P.chance(0.5)) {
+                P.st.w = clamp((P.st.w || 7) + P.pick([-2, -1, 1, 1, 2]), 4, 13);
+                P.tone(t, M(dg(R + 12, sc, P.st.w)), P.sd * 2, { sus: true, a: 0.03, r: 0.15, vol: 0.06, vib: [5.5, 9], rev: 0.4, echo: 0.2 });
+            }
+            if (pos === 0 && bar % 8 === 4) P.motif(t, R + 12, sc, (m, tt, d) => P.tone(tt, M(m), d, { sus: true, a: 0.03, r: 0.3, vol: 0.07, vib: [5.5, 9], rev: 0.4 }));
+        },
+    };
+
+    CUES.echoProbe = {
+        group: 'event', cat: 'encounter', title: 'Echo Probe', key: 'A, deep space', bpm: 70, root: 33, echoSteps: 6,
+        blurb: 'A probe goes out into the dark. Sonar pings with long echoes, a radar sweep, telemetry blips, a deep-space drone.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4;
+            if (pos === 0 && bar % 4 === 0) P.pad(t, [33, 40, 45], P.sd * 64, { type: 'sine', uni: 1, a: 2, r: 2, vol: 0.14 });
+            if (pos === 0 && bar % 2 === 0) P.tone(t, 1245, 0.9, { vol: 0.05, rev: 0.6, echo: 0.55 });
+            if (pos === 8 && bar % 4 === 3) P.tone(t, 1245, 0.9, { vol: 0.025, rev: 0.6, echo: 0.3, pan: 0.6 });
+            if (pos === 0) P.noise(t, P.sd * 16, { f: 400, f2: 2000, q: 8, sus: true, a: P.sd * 12, r: 0.1, vol: 0.02, rev: 0.3, pan: -0.4 });
+            if (P.chance(0.12)) P.tone(t, M(81 + P.pick([0, 3, 7, 10, 12])), 0.03, { type: 'square', lp: 3000, vol: 0.015, rev: 0.2, pan: P.rnd() - 0.5 });
+        },
+    };
+
+    CUES.fakeCrash = {
+        group: 'event', cat: 'encounter', title: 'Fake crash', key: 'no key', bpm: 60, root: 40, echoSteps: 2, vol: 0.9,
+        blurb: 'The blue screen and its fake progress bar. No music at all, just a fan, a hard drive seeking, and a beep that means nothing.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4;
+            if (pos === 0 && bar % 4 === 0) {
+                P.noise(t, P.sd * 64, { type: 'lowpass', f: 380, q: 0.5, sus: true, a: 0.3, r: 0.3, vol: 0.12, rev: 0 });
+                P.tone(t, 118, P.sd * 64, { type: 'triangle', sus: true, a: 0.3, r: 0.3, vol: 0.02, rev: 0 });
+            }
+            if (P.chance(0.18)) {
+                const n = 1 + Math.floor(P.rnd() * 3);
+                for (let k = 0; k < n; k++) P.noise(t + k * 0.03, 0.006, { type: 'bandpass', f: 3500, q: 2, vol: 0.05, rev: 0 });
+            }
+            if (pos === 0 && bar % 4 === 2) P.tone(t, 1000, 0.25, { type: 'square', lp: 2500, vol: 0.03, rev: 0 });
+        },
+    };
+
+    CUES.wipeProtocol = {
+        group: 'event', cat: 'encounter', title: 'Wipe Protocol', key: 'B♭ alarm', bpm: 120, root: 46, echoSteps: 2,
+        blurb: 'You siphoned too many other Operators and they noticed. Fifteen seconds frozen: countdown beeps, a scanning beam, an alarm.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, R = 46;
+            if (pos % 4 === 0) P.tone(t, M(R + 36 + Math.min(bar, 7)), 0.08, { type: 'square', lp: 4000, vol: 0.04, rev: 0.1 });
+            if (pos === 0) P.noise(t, P.sd * 16, { f: 300, f2: 4000, q: 10, sus: true, a: P.sd * 15, r: 0.02, vol: 0.03, rev: 0.2 });
+            if (pos === 0 && bar % 2 === 0) P.pad(t, [R, R + 1, R + 6], P.sd * 32, { lp: 800, a: 0.3, r: 0.3, vol: 0.08 });
+            if (pos === 0 || pos === 8) P.kick(t, { vol: 0.45, f0: 100, f1: 40, d: 0.3 });
+        },
+    };
+
+    CUES.autoRebellion = {
+        group: 'event', cat: 'encounter', title: 'Auto Rebellion', key: 'D, industrial', bpm: 104, root: 38, echoSteps: 2,
+        blurb: 'The generators go on strike. A broken machine groove: pistons, clanks, a complaining melody that keeps stalling.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, R = 38;
+            if (pos === 0 || pos === 6 || pos === 10) P.kick(t, { vol: 0.5, f0: 160, f1: 50, d: 0.2 });
+            if (pos === 4 || pos === 12) P.noise(t, 0.1, { type: 'highpass', f: 3000, vol: 0.07, rev: 0.1 });
+            if (pos === 2 || pos === 11) P.bell(t, M(R + 30 + P.pick([0, 1])), 0.3, { ratio: 1.41, idx: 5, vol: 0.04, rev: 0.25, pan: P.rnd() - 0.5 });
+            const LINE = [0, 3, 5, 3, 6, 5, 3, 0];
+            if (pos % 2 === 0 && !(bar % 2 === 1 && pos >= 8)) P.tone(t, M(R + 24 + LINE[(pos >> 1) % 8]), P.sd * 1.6, { type: 'square', lp: 1600, vol: 0.05, rev: 0.15 });
+            if (bar % 2 === 1 && pos === 8) P.tone(t, M(R + 24), P.sd * 8, { type: 'square', lp: 1600, glide: 0.25, gt: P.sd * 8, sus: true, a: 0.01, r: 0.1, vol: 0.05 });
+            if (pos === 0) P.tone(t, M(R - 12), P.sd * 14, { type: 'sawtooth', lp: 300, sus: true, a: 0.02, r: 0.2, vol: 0.13 });
+        },
+    };
+
+    CUES.nullTab = {
+        group: 'event', cat: 'encounter', title: 'NULL tab', key: 'C♯ drone', bpm: 48, root: 37, echoSteps: 4,
+        blurb: 'A parasitic tab feeding on your screen. A drone that darkens bar by bar, and a far-off music box from Phase 0 slowly going out of tune.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, R = 37;
+            const dark = Math.min(1, bar / 20);
+            if (pos === 0 && bar % 2 === 0) P.pad(t, [R - 12, R - 11, R], P.sd * 32, { uni: 2, spread: 14, lp: 1300 - dark * 1050, a: 1, r: 1, vol: 0.12 });
+            if (pos % 4 === 0 && P.chance(0.55 - dark * 0.35)) {
+                P.st.w = clamp((P.st.w || 5) + P.pick([-1, 1, 2, -2]), 0, 9);
+                P.bell(t, M(dg(72, SC.penta, P.st.w)), 1.5, { ratio: 2, idx: 0.8, vol: 0.04 * (1 - dark * 0.6), det: -dark * 60 - P.rnd() * 20, rev: 0.8, echo: 0.3 });
+            }
+            if (pos === 8 && bar % 4 === 3) P.noise(t, 1.5, { f: 500, q: 1, sus: true, a: 0.8, r: 0.6, vol: 0.03, rev: 0.7 });
+        },
+    };
+
+    // ── Modes (player-triggered or long-running states) ──
+
+    CUES.overdrive = {
+        group: 'event', cat: 'mode', title: 'Overdrive', key: 'G major', bpm: 150, root: 43, echoSteps: 3,
+        blurb: 'The ×10 button: thirty seconds, flat out. Heroic and fast. Octave bass, open hats, a square-wave lead punching chords.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.major, R = 43;
+            const cd = [0, 4, 5, 3][bar % 4];
+            P.tone(t, M(dg(R, sc, cd) + (pos % 2 ? 12 : 0)), 0.08, { type: 'sawtooth', lp: 1400, vol: 0.1, rev: 0 });
+            if (pos % 4 === 0) P.kick(t, { vol: 0.55, f0: 160 });
+            if (pos % 4 === 2) P.hat(t, { vol: 0.05, open: true });
+            if (pos === 4 || pos === 12) P.snare(t, { vol: 0.22 });
+            if ([0, 3, 6, 10, 12].indexOf(pos) >= 0) P.pad(t, triad(R + 24, sc, cd), 0.12, { type: 'square', uni: 1, lp: 3600, a: 0.004, r: 0.06, vol: 0.06, rev: 0.15 });
+            if (pos === 0 && bar % 4 === 3) P.riser(t, P.sd * 16, { vol: 0.05 });
+        },
+    };
+
+    CUES.controlledOverload = {
+        group: 'event', cat: 'mode', title: 'Controlled Overload', key: 'F minor', bpm: 128, root: 29, echoSteps: 3,
+        blurb: 'All your instability vented into one 45-second burst. A wobbling bass that opens and shuts, half-time drums, a lot of weight.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, R = 29;
+            const rate = bar % 4 === 3 ? 1 : 2;
+            if (pos % rate === 0) P.tone(t, M(R + [0, 0, 3, -2][bar % 4]), P.sd * rate * 0.95, { type: 'sawtooth', uni: 2, spread: 14, lp: (pos / rate) % 2 ? 2600 : 260, fenv: (pos / rate) % 2 ? 300 : 2600, ft: P.sd * rate, q: 6, vol: 0.13, rev: 0 });
+            if (pos === 0 || pos === 14) P.kick(t, { vol: 0.65, f0: 150, f1: 40 });
+            if (pos === 8) P.snare(t, { vol: 0.32, rev: 0.4 });
+            if (pos % 2 === 1) P.hat(t, { vol: 0.02 });
+            if (pos === 0) P.tone(t, M(R - 12), P.sd * 14, { sus: true, a: 0.01, r: 0.1, vol: 0.15 });
+        },
+    };
+
+    CUES.omegaTimeline = {
+        group: 'event', cat: 'mode', title: 'Omega timeline', key: 'D minor, mirrored', bpm: 84, root: 50, echoSteps: 3,
+        blurb: 'The Simulation Schism’s parallel world. The home theme’s chords as reversed swells, the Operator motif upside down and backwards.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.minor, R = 50;
+            const cd = [6, 2, 5, 0][(bar >> 1) % 4];
+            if (pos === 0 && bar % 2 === 0) P.swell(t, P.sd * 32, triad(R + 12, sc, cd).concat([dg(R + 24, sc, cd)]), { vol: 0.1, lp: 1300 });
+            if (pos === 0 && bar % 2 === 0) P.tone(t, M(dg(R - 12, sc, cd)), P.sd * 32, { sus: true, a: P.sd * 30, r: 0.03, vol: 0.18 });
+            if (pos % 2 === 0) P.bell(t, M(dg(R + 24, sc, cd + [9, 7, 4, 7, 4, 2, 0, 2][(pos >> 1) % 8])), 0.9, { ratio: 2, idx: 1.2, vol: 0.035, det: -25, rev: 0.6, echo: 0.3, pan: (pos >> 1) % 2 ? -0.3 : 0.3 });
+            if (pos === 0 && bar % 8 === 2) P.motif(t, R + 24, sc, (m, tt, d) => P.tone(tt, M(m), d, { type: 'triangle', sus: true, a: d * 0.9, r: 0.03, vol: 0.1, rev: 0.5 }), { invert: true, retro: true });
+        },
+    };
+
+    CUES.dampened = {
+        group: 'event', cat: 'mode', title: 'Dampened', key: 'A♭ major', bpm: 66, root: 44, echoSteps: 3,
+        blurb: 'Cognitive Dampener, Cryo Stasis and Cognitive Denial: the safe rooms. As if heard through a wall of water. Muffled, slow, calm.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.major, R = 44;
+            const cd = [0, 5, 3, 4][(bar >> 1) % 4];
+            if (pos === 0 && bar % 2 === 0) P.pad(t, triad(R + 12, sc, cd), P.sd * 32, { type: 'sine', uni: 1, a: 1.5, r: 2, vol: 0.13, rev: 0.6 });
+            if (pos === 0 || pos === 8) P.kick(t, { vol: 0.2, f0: 70, f1: 40, d: 0.5, click: false, rev: 0.3 });
+            if (pos % 4 === 0) P.tone(t, M(dg(R + 24, sc, cd + [0, 2, 4, 2][pos >> 2])), 1, { type: 'triangle', lp: 480, vol: 0.09, rev: 0.6, echo: 0.3 });
+        },
+    };
+
+    CUES.zalgoInversion = {
+        group: 'event', cat: 'mode', title: 'Zalgo inversion', key: 'E♭, reversed', bpm: 90, root: 51, echoSteps: 3,
+        blurb: 'The screen flips for thirty seconds. Everything plays backwards: swells that cut off, reversed cymbals, the motif back to front.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.phrygian, R = 51;
+            if (pos % 4 === 0) {
+                const n = dg(R + 12, sc, [4, 2, 1, 0][pos >> 2] + (bar % 2 ? 3 : 0));
+                P.tone(t, M(n), P.sd * 4, { type: 'triangle', sus: true, a: P.sd * 3.8, r: 0.02, vol: 0.09, det: P.rnd() * 30 - 15, rev: 0.4 });
+            }
+            if (pos === 0 && bar % 2 === 1) P.noise(t, P.sd * 16, { type: 'highpass', f: 5000, sus: true, a: P.sd * 16, r: 0.02, vol: 0.06, rev: 0.2 });
+            if (pos === 0 && bar % 2 === 0) P.swell(t, P.sd * 16, [R - 12, R - 5, R + 1], { vol: 0.1, lp: 900 });
+            if (pos === 12) P.kick(t, { vol: 0.45, f0: 60, f1: 140, pd: 0.15, d: 0.2, click: false });
+            if (pos === 0 && bar % 4 === 2) P.motif(t, R + 24, sc, (m, tt, d) => P.bell(tt, M(m), d, { ratio: 2, idx: 1, vol: 0.05, rev: 0.6 }), { retro: true });
+        },
+    };
+
+    CUES.rogueButton = {
+        group: 'event', cat: 'mode', title: 'Rogue button', key: 'C major', bpm: 168, root: 48, echoSteps: 2,
+        blurb: 'ACQUIRE has escaped and is bouncing around the screen. A comic chase: galloping bass, a xylophone running up and down.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.major, R = 48;
+            if ([0, 3, 4, 8, 11, 12].indexOf(pos) >= 0) P.tone(t, M(dg(R - 12, sc, [0, 4, 3, 4][bar % 4]) + (pos % 4 === 3 ? 7 : 0)), 0.1, { type: 'triangle', lp: 1000, vol: 0.15, rev: 0 });
+            const run = pos < 8 ? pos : 15 - pos;
+            P.bell(t, M(dg(R + 24, sc, run + (bar % 2) * 2)), 0.18, { ratio: 4, idx: 2, vol: 0.04, rev: 0.15, pan: (run / 7) - 0.5 });
+            if (pos === 0 || pos === 8) P.kick(t, { vol: 0.35 });
+            if (pos === 4 || pos === 12) P.snare(t, { vol: 0.14, d: 0.08 });
+        },
+    };
+
+    // ── Screens added from the full event list ──
+
+    CUES.runLaws = {
+        group: 'screen', title: 'Run laws', key: 'B minor', bpm: 84, root: 47, echoSteps: 3,
+        blurb: 'After a prestige, three laws for the next run are dealt and you pick one. Harp arpeggios, low strings, a card flicked onto the table.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.minor, R = 47;
+            const cd = [0, 5, 3, 4][(bar >> 1) % 4];
+            if (pos === 0 && bar % 2 === 0) P.pad(t, triad(R - 12, sc, cd), P.sd * 32, { lp: 700, a: 1, r: 1, vol: 0.1 });
+            const ch = triad(R + 12, sc, cd);
+            if (pos % 2 === 0) P.tone(t, M(ch[(pos >> 1) % 3] + ((pos >> 1) >= 3 ? 12 : 0)), 0.8, { type: 'triangle', lp: 2200, fenv: 6000, ft: 0.04, vol: 0.055, rev: 0.45, pan: (pos % 4 ? 0.2 : -0.2) });
+            if (pos === 12 && bar % 2 === 1) P.noise(t, 0.04, { type: 'bandpass', f: 2500, q: 1, vol: 0.08, rev: 0.2 });
+            if (pos % 8 === 0) P.wood(t, 1600, { vol: 0.02 });
+        },
+    };
+
+    CUES.credits = {
+        group: 'screen', title: 'End credits', key: 'D major', bpm: 78, root: 50, echoSteps: 3,
+        blurb: 'After the epilogue. The Operator motif finally resolves, in D major on a warm piano over strings. It is allowed to stop now.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.major, R = 50;
+            const cd = [0, 4, 5, 3, 0, 3, 4, 0][bar % 8];
+            if (pos === 0) {
+                P.pad(t, triad(R, sc, cd).concat([dg(R + 12, sc, cd + 2)]), P.sd * 16, { lp: 1600, a: 0.8, r: 1.2, vol: 0.1 });
+                P.tone(t, M(dg(R - 12, sc, cd)), P.sd * 16, { sus: true, a: 0.2, r: 1, vol: 0.14 });
+            }
+            if ([0, 6, 10].indexOf(pos) >= 0) P.tone(t, M(triad(R + 12, sc, cd)[[0, 1, 2][[0, 6, 10].indexOf(pos)]]), 1.3, { type: 'triangle', lp: 900, fenv: 3800, ft: 0.25, vol: 0.06, rev: 0.45 });
+            if (pos === 0 && bar % 4 === 1)
+                P.motif(t, R + 24, sc, (m, tt, d) => P.bell(tt, M(m), d + 1.4, { ratio: 2, idx: 1.1, vol: 0.08, rev: 0.5, echo: 0.2 }), { lift: bar % 8 === 5 });
+        },
+    };
+
+    // ── Lore moods: one underscore per mood the game already assigns (_moodForChunk) ──
+
+    CUES.lore_wonder = {
+        group: 'lore', mood: 'wonder', title: 'Wonder', key: 'C lydian', bpm: 58, root: 48, echoSteps: 4,
+        blurb: 'For the awakening chunks. Open and bright: slow bells over a floating chord, as if the machine were beautiful.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, sc = SC.lydian, R = 48;
+            if (pos === 0 && bar % 2 === 0) P.pad(t, [R, R + 7, R + 14, R + 18], P.sd * 32, { type: 'triangle', uni: 2, lp: 2600, a: 1.8, r: 2, vol: 0.1, rev: 0.7 });
+            if (pos % 4 === 0 && P.chance(0.7)) P.bell(t, M(dg(R + 24, sc, P.pick([0, 1, 2, 3, 4, 6, 7]))), 2.4, { ratio: 3.5, idx: 1.2, vol: 0.045, rev: 0.7, echo: 0.3, pan: P.rnd() - 0.5 });
+        },
+    };
+    CUES.lore_horror = {
+        group: 'lore', mood: 'horror', title: 'Horror', key: 'C♯ cluster', bpm: 50, root: 37, echoSteps: 4,
+        blurb: 'For the body-and-cost chunks. A cluster of strings that never settles, a distant heartbeat, something breathing in the left ear.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, R = 37;
+            if (pos === 0 && bar % 2 === 0) P.pad(t, [R, R + 1, R + 6, R + 13], P.sd * 32, { uni: 3, spread: 20, lp: 900, vib: [0.3, 18], a: 2, r: 2, vol: 0.1, rev: 0.6 });
+            if (pos === 0 || pos === 3) P.kick(t, { vol: pos ? 0.12 : 0.2, f0: 70, f1: 38, d: 0.3, click: false, rev: 0.5 });
+            if (pos === 8 && bar % 2 === 1) P.noise(t, 1.6, { f: 700, q: 1.2, sus: true, a: 0.8, r: 0.7, vol: 0.03, pan: -0.8, rev: 0.4 });
+            if (P.chance(0.02)) P.tone(t, M(R + 48 + P.pick([0, 1])), 1.2, { sus: true, a: 0.6, r: 0.5, vol: 0.012, vib: [7, 25], rev: 0.8 });
+        },
+    };
+    CUES.lore_mechanical = {
+        group: 'lore', mood: 'mechanical', title: 'Mechanical', key: 'E minor pentatonic', bpm: 92, root: 40, echoSteps: 3,
+        blurb: 'For the systems and machinery chunks. Clockwork: gears ticking in two pitches, a piston, a pattern that repeats exactly.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, R = 40;
+            const sc = [0, 3, 5, 7, 10];
+            P.wood(t, pos % 2 ? 1500 : 2200, { vol: pos % 4 === 0 ? 0.035 : 0.015, rev: 0.1, pan: pos % 2 ? 0.3 : -0.3 });
+            if (pos === 0 || pos === 8) P.noise(t, 0.12, { type: 'highpass', f: 2500, vol: 0.04, rev: 0.1 });
+            const PAT = [0, 2, 4, 2, 5, 4, 2, 1];
+            if (pos % 2 === 0) P.tone(t, M(dg(R + 24, sc, PAT[(pos >> 1) % 8] + (bar % 4 === 3 ? 2 : 0))), 0.3, { type: 'triangle', lp: 1500, fenv: 4000, ft: 0.05, vol: 0.05, rev: 0.25 });
+            if (pos === 0) P.tone(t, M(R - 12), P.sd * 6, { type: 'sawtooth', lp: 300, sus: true, a: 0.01, r: 0.2, vol: 0.12 });
+        },
+    };
+    CUES.lore_mystical = {
+        group: 'lore', mood: 'mystical', title: 'Mystical', key: 'D whole-tone', bpm: 54, root: 50, echoSteps: 5,
+        blurb: 'For the cosmic and cyclical chunks. A choir with no home key, glass bells in a whole-tone scale, time folding back on itself.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, R = 50;
+            if (pos === 0 && bar % 2 === 0) {
+                const r = R + [0, 2, -2, 4][(bar >> 1) % 4];
+                P.choir(t, M(r), P.sd * 32, { v: 'o', a: 1.5, r: 1.5, vol: 0.05, rev: 0.8 });
+                P.choir(t, M(r + 6), P.sd * 32, { v: 'a', a: 1.8, r: 1.5, vol: 0.035, rev: 0.8 });
+                P.tone(t, M(r - 24), P.sd * 32, { sus: true, a: 1, r: 1.5, vol: 0.12 });
+            }
+            if (pos % 2 === 0 && P.chance(0.3)) P.bell(t, M(dg(R + 24, SC.whole, Math.floor(P.rnd() * 9))), 2.5, { ratio: 4.23, idx: 1.5, vol: 0.03, rev: 0.9, echo: 0.4, pan: P.rnd() * 1.6 - 0.8 });
+        },
+    };
+    CUES.lore_crisis = {
+        group: 'lore', mood: 'crisis', title: 'Crisis', key: 'G minor', bpm: 84, root: 43, echoSteps: 3,
+        blurb: 'For hidden, rare and overload chunks. Urgent: a low pulse on every eighth note, a rubbing semitone, a riser that never pays off.',
+        step(P, s, t) {
+            const pos = s % 16, bar = s >> 4, R = 43;
+            if (pos % 2 === 0) P.tone(t, M(R - 12), 0.12, { type: 'sawtooth', lp: 500, vol: 0.12, rev: 0 });
+            if (pos === 0 && bar % 2 === 0) P.pad(t, [R + 12, R + 13, R + 19], P.sd * 32, { lp: 1200, a: 0.8, r: 0.6, vol: 0.08, rev: 0.4 });
+            if (pos === 0 || pos === 8) P.kick(t, { vol: 0.35, f0: 110, f1: 40 });
+            if (pos === 0 && bar % 4 === 2) P.riser(t, P.sd * 30, { vol: 0.04 });
+            if (pos === 12 && P.chance(0.5)) P.tone(t, M(R + 24 + P.pick([0, 1, 6])), 0.3, { type: 'square', lp: 2000, vol: 0.03, rev: 0.4 });
+        },
+    };
+
     // ── STINGERS: one-shots over the music, which ducks under them ─────────
     const STINGERS = {
         phaseAdvance: {
-            title: 'Phase advance', len: 3, blurb: 'A new chapter begins. One huge hit, then the motif climbing.',
+            cat: 'story', title: 'Phase advance', len: 3, blurb: 'A new chapter begins. One huge hit, then the motif climbing.',
             fn(D, t) {
                 kick(D, t, { vol: 0.8, f0: 90, f1: 30, pd: 0.15, d: 1.6, rev: 0.6 });
                 noise(D, t, 1.2, { type: 'lowpass', f: 2600, f2: 150, vol: 0.12, rev: 0.8 });
@@ -1057,7 +1503,7 @@
             },
         },
         eventStart: {
-            title: 'Event incoming', len: 1.2, blurb: 'Something has started. Two falling alarm tones over a short riser.',
+            cat: 'event', title: 'Event incoming', len: 1.2, blurb: 'Something has started. Two falling alarm tones over a short riser.',
             fn(D, t) {
                 riser(D, t, 0.5, { vol: 0.07, f: 500, f2: 5000 });
                 tone(D, t + 0.5, 988, 0.2, { type: 'square', lp: 2500, vol: 0.06, rev: 0.4 });
@@ -1066,21 +1512,21 @@
             },
         },
         eventWin: {
-            title: 'Event won', len: 1.5, blurb: 'A clean major arpeggio up, and a sparkle.',
+            cat: 'event', title: 'Event won', len: 1.5, blurb: 'A clean major arpeggio up, and a sparkle.',
             fn(D, t) {
                 [0, 4, 7, 12, 16].forEach((n, i) => bell(D, t + i * 0.07, M(72 + n), 1.2, { ratio: 2, idx: 1.2, vol: 0.07, rev: 0.5, echo: 0.2 }));
                 for (let k = 0; k < 6; k++) tone(D, t + 0.35 + k * 0.05, M(96 + k * 2), 0.2, { vol: 0.015, rev: 0.6, pan: k % 2 ? 0.5 : -0.5 });
             },
         },
         eventFail: {
-            title: 'Event failed', len: 1.5, blurb: 'A chromatic slide down and a thud.',
+            cat: 'event', title: 'Event failed', len: 1.5, blurb: 'A chromatic slide down and a thud.',
             fn(D, t) {
                 [0, -1, -2, -6].forEach((n, i) => tone(D, t + i * 0.12, M(64 + n), 0.3, { type: 'sawtooth', lp: 1200, vol: 0.07, rev: 0.3 }));
                 kick(D, t + 0.48, { vol: 0.6, f0: 90, f1: 35, d: 0.7 });
             },
         },
         prestigeFanfare: {
-            title: 'Prestige fanfare', len: 4, blurb: 'Brass hits on I–IV–V, then a held chord with the choir.',
+            cat: 'reward', title: 'Prestige fanfare', len: 4, blurb: 'Brass hits on I–IV–V, then a held chord with the choir.',
             fn(D, t) {
                 const hits = [[52, 56, 59], [57, 61, 64], [59, 63, 66], [64, 68, 71, 76]];
                 hits.forEach((ch, i) => {
@@ -1092,7 +1538,7 @@
             },
         },
         redlineCollapse: {
-            title: 'Core collapse', len: 2.5, blurb: 'Redline gives way. Everything falls down in pitch and crumbles.',
+            cat: 'instability', title: 'Core collapse', len: 2.5, blurb: 'Redline gives way. Everything falls down in pitch and crumbles.',
             fn(D, t) {
                 tone(D, t, 1200, 1.6, { type: 'sawtooth', uni: 3, spread: 20, glide: 0.035, gt: 1.5, lp: 3000, sus: true, a: 0.01, r: 0.2, vol: 0.1, rev: 0.4 });
                 noise(D, t, 1.8, { type: 'lowpass', f: 8000, f2: 100, vol: 0.14, rev: 0.6 });
@@ -1101,14 +1547,14 @@
             },
         },
         achievement: {
-            title: 'Achievement', len: 1.2, blurb: 'A bright bell triad with a shimmer on top.',
+            cat: 'reward', title: 'Achievement', len: 1.2, blurb: 'A bright bell triad with a shimmer on top.',
             fn(D, t) {
                 [76, 80, 83, 88].forEach((n, i) => bell(D, t + i * 0.05, M(n), 1.4, { ratio: 3.5, idx: 1.3, vol: 0.06, rev: 0.6, echo: 0.2 }));
                 noise(D, t, 0.8, { type: 'highpass', f: 9000, sus: true, a: 0.05, r: 0.5, vol: 0.015, rev: 0.6 });
             },
         },
         loreReveal: {
-            title: 'Lore reveal', len: 2.5, blurb: 'A reversed swell that lands on a single bell chord.',
+            cat: 'story', title: 'Lore reveal', len: 2.5, blurb: 'A reversed swell that lands on a single bell chord.',
             fn(D, t) {
                 swell(D, t, 1.2, [60, 67, 75], { vol: 0.1 });
                 [60, 67, 72, 75].forEach(n => bell(D, t + 1.2, M(n + 12), 2.6, { ratio: 3.5, idx: 1.5, vol: 0.05, rev: 0.8, echo: 0.3 }));
@@ -1116,7 +1562,7 @@
             },
         },
         nullSpeaks: {
-            title: 'NULL speaks', len: 3, blurb: 'Under a voice line. A throat-deep formant and a breath panning across the room.',
+            cat: 'story', title: 'NULL speaks', len: 3, blurb: 'Under a voice line. A throat-deep formant and a breath panning across the room.',
             fn(D, t) {
                 choir(D, t, 55, 2.2, { v: 'o', a: 0.6, r: 0.8, vol: 0.09, det: -30 });
                 noise(D, t, 2, { f: 700, q: 1, sus: true, a: 0.8, r: 0.8, vol: 0.035, pan: -0.8, rev: 0.6 });
@@ -1124,7 +1570,7 @@
             },
         },
         ghostPass: {
-            title: 'Ghost Operator', len: 2.5, blurb: 'A dead Operator’s cursor drifts past. Two dry clicks from one side, a whine from the other.',
+            cat: 'event', title: 'Ghost Operator', len: 2.5, blurb: 'A dead Operator’s cursor drifts past. Two dry clicks from one side, a whine from the other.',
             fn(D, t) {
                 const side = Math.random() < 0.5 ? -0.95 : 0.95;
                 [0, 0.9].forEach(dt => noise(D, t + dt, 0.03, { type: 'bandpass', f: 3200, q: 1.5, vol: 0.12, pan: side, rev: 0.1 }));
@@ -1132,9 +1578,198 @@
             },
         },
         crashCut: {
-            title: 'Crash cut', len: 0.5, duck: 0.0001, stopsMusic: true, blurb: 'The fake crash: the music stops dead after four slivers of buzz. Play something to bring it back.',
+            cat: 'event', title: 'Crash cut', len: 0.5, duck: 0.0001, stopsMusic: true, blurb: 'The fake crash: the music stops dead after four slivers of buzz. Play something to bring it back.',
             fn(D, t) {
                 for (let k = 0; k < 4; k++) tone(D, t + k * 0.07, 93, 0.045, { type: 'square', a: 0.001, vol: 0.06, rev: 0 });
+            },
+        },
+        // ── Story moments ──
+        instabilityReveal: {
+            cat: 'story', title: 'Instability revealed', len: 2.5, blurb: 'The first time the meter appears (Progressive Horror). A red flash of static, then a heartbeat that stops.',
+            fn(D, t) {
+                noise(D, t, 0.35, { type: 'highpass', f: 1500, vol: 0.12, rev: 0.3 });
+                glitch(D, t, { vol: 0.05, n: 10 });
+                kick(D, t + 0.5, { f0: 100, f1: 42, d: 0.25, vol: 0.5, click: false });
+                kick(D, t + 0.67, { f0: 85, f1: 38, d: 0.22, vol: 0.32, click: false });
+                tone(D, t + 0.9, M(85), 1.4, { sus: true, a: 0.3, r: 0.8, vol: 0.02, vib: [6.5, 30], rev: 0.7 });
+            },
+        },
+        welcomeBack: {
+            cat: 'story', title: 'Welcome back', len: 2, blurb: 'Returning after time away ("WELCOME BACK, ABANDONER", the streak greeting). A terminal wakes and recognises you.',
+            fn(D, t) {
+                [0, 7, 12].forEach((n, i) => tone(D, t + i * 0.12, M(69 + n), 0.12, { type: 'square', lp: 3000, vol: 0.05, rev: 0.3 }));
+                bell(D, t + 0.4, M(81), 1.4, { ratio: 3.5, idx: 1.3, vol: 0.06, rev: 0.6 });
+                tone(D, t + 0.4, M(45), 1.2, { sus: true, a: 0.05, r: 1, vol: 0.12 });
+            },
+        },
+        witchingHour: {
+            cat: 'story', title: 'Witching Hour', len: 5, blurb: 'Three in the morning, real clock. Three slow tower-bell strikes and nothing after them.',
+            fn(D, t) {
+                for (let k = 0; k < 3; k++) {
+                    bell(D, t + k * 1.3, M(45), 3, { ratio: 3.5, idx: 3, vol: 0.12, rev: 0.8 });
+                    bell(D, t + k * 1.3, M(57), 2.5, { ratio: 2.76, idx: 2, vol: 0.05, rev: 0.8 });
+                }
+            },
+        },
+        endGlitch: {
+            cat: 'story', title: 'The End: crash', len: 3, blurb: 'The ending begins with the terminal failing: an error stream that speeds up and then cuts to silence.',
+            stopsMusic: true,
+            fn(D, t) {
+                for (let k = 0; k < 18; k++) {
+                    const tt = t + 2.2 * (1 - Math.pow(1 - k / 18, 0.6));
+                    tone(D, tt, 400 + Math.random() * 2400, 0.03, { type: 'square', lp: 4000, vol: 0.04, rev: 0.1, pan: Math.random() * 1.6 - 0.8 });
+                }
+                noise(D, t, 2.2, { type: 'highpass', f: 800, sus: true, a: 2.1, r: 0.01, vol: 0.08, rev: 0 });
+            },
+        },
+        duckReveal: {
+            cat: 'story', title: 'Duck reveal', len: 4, blurb: 'The very last moment of the game, when the companion shows its true form. A held chord, a pause, one quack.',
+            fn(D, t) {
+                pad(D, t, [62, 66, 69, 74], 2.4, { type: 'triangle', uni: 2, lp: 2400, a: 0.8, r: 1.2, vol: 0.12, rev: 0.7 });
+                tone(D, t + 3, M(69), 0.16, { type: 'sawtooth', bp: 1500, fenv: 650, ft: 0.07, q: 5, sus: true, a: 0.01, r: 0.06, vol: 0.22, rev: 0.3 });
+            },
+        },
+
+        // ── Events ──
+        anomalyChoice: {
+            cat: 'event', title: 'Anomaly choice', len: 5, blurb: 'Corruption, Structural Node, Critical Entity or Unstable Rift. A five-second countdown while the simulation decides for you.',
+            fn(D, t) {
+                for (let k = 0; k < 5; k++) tone(D, t + k, M(76 - k), 0.1, { type: 'square', lp: 2500, vol: 0.045, rev: 0.3 });
+                swell(D, t + 3.5, 1.5, [52, 53, 59], { vol: 0.08 });
+                kick(D, t + 5, { vol: 0.5, f0: 90, f1: 35, d: 0.5 });
+            },
+        },
+        glitchMarketOpen: {
+            cat: 'event', title: 'Glitch Market opens', len: 1.5, blurb: 'The shop that takes instability as money is open for a few minutes. A shop bell that has been corrupted.',
+            fn(D, t) {
+                bell(D, t, M(84), 0.8, { ratio: 3.5, idx: 1.5, vol: 0.06, rev: 0.4 });
+                bell(D, t + 0.12, M(79), 0.8, { ratio: 3.5, idx: 1.5, vol: 0.06, rev: 0.4 });
+                glitch(D, t + 0.25, { vol: 0.04, n: 6 });
+                bell(D, t + 0.4, M(78), 1, { ratio: 1.41, idx: 4, vol: 0.05, rev: 0.5 });
+            },
+        },
+        crashReveal: {
+            cat: 'event', title: 'Crash: just kidding', len: 1.6, blurb: 'The blue screen turns out to be a joke (or the SysDiag Crash Dividend pays out). A cheeky rimshot and a bright chord.',
+            fn(D, t) {
+                snare(D, t, { vol: 0.25 }); tom(D, t + 0.12, 140, { vol: 0.2 }); tom(D, t + 0.24, 100, { vol: 0.25 });
+                noise(D, t + 0.36, 0.5, { type: 'highpass', f: 6000, vol: 0.08, rev: 0.3 });
+                pad(D, t + 0.36, [60, 64, 67, 72], 0.8, { type: 'square', uni: 1, lp: 3000, a: 0.005, r: 0.6, vol: 0.1 });
+            },
+        },
+        uiFall: {
+            cat: 'event', title: 'Energy display falls', len: 2.2, blurb: 'Overflow Event at 1e18: the energy counter comes loose and drops off the screen. A falling whistle and a crash.',
+            fn(D, t) {
+                tone(D, t, 1800, 1.4, { type: 'sine', glide: 0.12, gt: 1.4, sus: true, a: 0.02, r: 0.05, vol: 0.05 });
+                kick(D, t + 1.45, { vol: 0.7, f0: 120, f1: 40, d: 0.5 });
+                noise(D, t + 1.45, 0.5, { type: 'lowpass', f: 3000, f2: 300, vol: 0.14, rev: 0.4 });
+                [0.1, 0.22, 0.3].forEach(dt => wood(D, t + 1.45 + dt, 900 + Math.random() * 800, { vol: 0.05 }));
+            },
+        },
+        sporeMutate: {
+            cat: 'event', title: 'Spore mutates', len: 2, blurb: 'The Blissful Spore is fed from the Blight and turns corrupt for 90 seconds. A wet, bubbling pitch-bend.',
+            fn(D, t) {
+                for (let k = 0; k < 7; k++) tone(D, t + k * 0.09, 200 + k * 60, 0.08, { glide: 1.8, gt: 0.08, vol: 0.05, rev: 0.3, pan: (k % 2 ? 0.4 : -0.4) });
+                tone(D, t + 0.6, 90, 1.2, { type: 'sawtooth', uni: 3, spread: 35, lp: 500, q: 8, sus: true, a: 0.05, r: 0.5, vol: 0.1 });
+            },
+        },
+        buttonExplode: {
+            cat: 'event', title: 'Angry button explodes', len: 2, blurb: 'You clicked too hard and ACQUIRE lost its temper: a fizzing fuse, a bang, then a sulky twelve-second silence.',
+            fn(D, t) {
+                noise(D, t, 0.6, { type: 'highpass', f: 4000, f2: 9000, sus: true, a: 0.55, r: 0.02, vol: 0.06 });
+                kick(D, t + 0.6, { vol: 0.8, f0: 140, f1: 30, pd: 0.12, d: 0.9 });
+                noise(D, t + 0.6, 1, { type: 'lowpass', f: 5000, f2: 200, vol: 0.18, rev: 0.5 });
+            },
+        },
+
+        // ── Rewards ──
+        luckySpawn: {
+            cat: 'reward', title: 'Lucky Pulse appears', len: 1, blurb: 'A golden orb near the button, there for thirteen seconds. A twinkling shimmer that invites a click.',
+            duck: false,
+            fn(D, t) { [0, 4, 7, 11, 14].forEach((n, i) => bell(D, t + i * 0.05, M(88 + n), 0.6, { ratio: 2, idx: 0.8, vol: 0.03, rev: 0.6, pan: i % 2 ? 0.5 : -0.5 })); },
+        },
+        luckyGood: {
+            cat: 'reward', title: 'Lucky Pulse: good', len: 1.2, blurb: 'Energy Surge, Amplify or Jackpot. Coins cascading.',
+            fn(D, t) { for (let k = 0; k < 8; k++) bell(D, t + k * 0.05, M(79 + [0, 4, 7, 12][k % 4] + (k >> 2) * 12), 0.4, { ratio: 2, idx: 1, vol: 0.05, rev: 0.4 }); },
+        },
+        luckyBad: {
+            cat: 'reward', title: 'Lucky Pulse: bad', len: 1, blurb: 'Static Discharge, Power Drain or a Collection Notice. A deflating wah.',
+            fn(D, t) { [0, -1, -2].forEach((n, i) => tone(D, t + i * 0.18, M(62 + n), 0.2, { type: 'sawtooth', bp: 900, fenv: 1600, ft: 0.18, q: 4, vol: 0.1, rev: 0.2 })); },
+        },
+        jackpot: {
+            cat: 'reward', title: 'Jackpot', len: 2.4, blurb: 'The Machine pays ×9, the Quantum Lottery hits big, or a Suspicious Button was worth it. Slot-machine bells and a fanfare chord.',
+            fn(D, t) {
+                for (let k = 0; k < 12; k++) bell(D, t + k * 0.06, M(84 + (k % 3) * 4), 0.2, { ratio: 3.5, idx: 1.2, vol: 0.04, rev: 0.3, pan: k % 2 ? 0.4 : -0.4 });
+                pad(D, t + 0.75, [60, 64, 67, 72, 76], 1.5, { uni: 2, lp: 3000, fenv: 800, ft: 0.1, a: 0.01, r: 1, vol: 0.13, rev: 0.5 });
+                kick(D, t + 0.75, { vol: 0.5 });
+            },
+        },
+        resonanceBurst: {
+            cat: 'reward', title: 'Resonance burst', len: 1.5, blurb: 'Five perfectly timed clicks in a row: ×10 click power for five seconds. A tuning fork struck in time.',
+            fn(D, t) {
+                bell(D, t, M(81), 2, { ratio: 1, idx: 0.3, vol: 0.12, rev: 0.5 });
+                bell(D, t, M(93), 1.5, { ratio: 2, idx: 0.6, vol: 0.05, rev: 0.5 });
+                riser(D, t, 0.4, { f: 2000, f2: 9000, vol: 0.04 });
+            },
+        },
+        voidReveal: {
+            cat: 'reward', title: 'Void Branch reveal', len: 3, blurb: 'You bought all five useless things, and somehow it worked (×10). A pompous organ chord that is a little too proud of itself.',
+            fn(D, t) {
+                pad(D, t, [48, 55, 60, 64, 67, 72], 2.5, { type: 'square', uni: 2, spread: 5, lp: 2200, a: 0.1, r: 1.2, vol: 0.14, rev: 0.7 });
+                tone(D, t + 2.2, M(96), 0.1, { vol: 0.03, rev: 0.4 });
+            },
+        },
+        megaProject: {
+            cat: 'reward', title: 'Mega Project complete', len: 3, blurb: 'Orbital Collector, Dyson Nexus, Reality Singularity... Heavy machinery powering up into a huge chord.',
+            fn(D, t) {
+                tone(D, t, 40, 1.4, { type: 'sawtooth', uni: 3, glide: 2, gt: 1.3, lp: 1500, fenv: 200, ft: 1.3, sus: true, a: 0.3, r: 0.1, vol: 0.12 });
+                kick(D, t + 1.4, { vol: 0.8, f0: 90, f1: 30, d: 1.2, rev: 0.6 });
+                pad(D, t + 1.4, [41, 48, 53, 57, 60, 65], 2, { uni: 3, lp: 2400, a: 0.01, r: 1.5, vol: 0.14, rev: 0.7 });
+            },
+        },
+        milestone: {
+            cat: 'reward', title: 'Energy milestone', len: 1.8, blurb: 'The screen flashes and shakes at 1M, 1B ... 1e30. A cymbal swell into one big hit.',
+            fn(D, t) {
+                noise(D, t, 0.6, { type: 'highpass', f: 5000, sus: true, a: 0.6, r: 0.02, vol: 0.07 });
+                kick(D, t + 0.6, { vol: 0.7, f0: 140, f1: 40, d: 0.6 });
+                pad(D, t + 0.6, [57, 64, 69, 73, 76], 1, { uni: 2, lp: 3500, a: 0.005, r: 0.8, vol: 0.12, rev: 0.5 });
+            },
+        },
+        secretFound: {
+            cat: 'reward', title: 'Secret found', len: 1.5, blurb: 'A hidden mechanic, a dead pixel, a terminal easter egg. A quick "you found something" arpeggio.',
+            fn(D, t) { [0, 6, 10, 15, 18].forEach((n, i) => bell(D, t + i * 0.08, M(72 + n), 0.9, { ratio: 4.23, idx: 1.2, vol: 0.05, rev: 0.6, echo: 0.2 })); },
+        },
+
+        // ── Instability ──
+        realityEcho: {
+            cat: 'instability', title: 'Reality Echo (20%)', len: 1.6, blurb: 'The first threshold: +15% energy. A note that answers itself from further and further away.',
+            fn(D, t) { for (let k = 0; k < 4; k++) bell(D, t + k * 0.22, M(76), 0.8, { ratio: 2, idx: 1, vol: 0.07 * Math.pow(0.55, k), rev: 0.3 + k * 0.15, pan: k % 2 ? 0.5 : -0.5 }); },
+        },
+        signalDistortion: {
+            cat: 'instability', title: 'Signal Distortion (40%)', len: 1.4, blurb: '+DATA. A radio being tuned through static.',
+            fn(D, t) {
+                noise(D, t, 1, { f: 600, f2: 4000, q: 6, sus: true, a: 0.1, r: 0.2, vol: 0.06 });
+                tone(D, t + 0.2, 700, 0.8, { glide: 1.7, gt: 0.8, sus: true, a: 0.05, r: 0.1, vol: 0.03, vib: [9, 40] });
+            },
+        },
+        chaosDividend: {
+            cat: 'instability', title: 'Chaos Dividend (60%)', len: 1.4, blurb: 'A 2–5× spike for a little more instability. A reward that sounds slightly wrong.',
+            fn(D, t) { [0, 4, 7, 11].forEach((n, i) => bell(D, t + i * 0.07, M(72 + n + (i === 3 ? 1 : 0)), 0.8, { ratio: 3.5, idx: 1.5, vol: 0.06, rev: 0.4, det: i === 3 ? 30 : 0 })); },
+        },
+        realityFracture: {
+            cat: 'instability', title: 'Reality Fracture (80%)', len: 2, blurb: 'A windfall or a loss, decided on the spot. Glass cracking.',
+            fn(D, t) {
+                for (let k = 0; k < 6; k++) bell(D, t + k * 0.03 + Math.random() * 0.02, M(90 + Math.random() * 10), 0.5, { ratio: 4.7, idx: 3, vol: 0.04, rev: 0.4, pan: Math.random() * 2 - 1 });
+                noise(D, t, 0.3, { type: 'highpass', f: 6000, vol: 0.08 });
+                kick(D, t + 0.15, { vol: 0.45, f0: 90, f1: 40, d: 0.4 });
+            },
+        },
+        realityCollapse: {
+            cat: 'instability', title: 'Reality Collapse (100%)', len: 3, blurb: 'The top of the meter. Everything caves in: a huge low hit, rubble, and the meter crashing back down.',
+            fn(D, t) {
+                kick(D, t, { vol: 0.9, f0: 70, f1: 25, pd: 0.2, d: 2, rev: 0.6 });
+                noise(D, t, 2.5, { type: 'lowpass', f: 2500, f2: 80, vol: 0.18, rev: 0.7 });
+                pad(D, t, [36, 37, 42, 43], 2.2, { uni: 3, spread: 25, lp: 900, a: 0.01, r: 1.5, vol: 0.14 });
+                for (let k = 0; k < 5; k++) wood(D, t + 0.4 + k * 0.25 + Math.random() * 0.1, 300 + Math.random() * 400, { vol: 0.05, rev: 0.4 });
             },
         },
     };
@@ -1301,7 +1936,132 @@
         gavel: { title: 'Gavel', blurb: 'Order in the Tribunal.', fn(D, t) { gavel(D, t, { vol: 0.45 }); } },
         buildingPlace: { title: 'Building placed', blurb: 'A metallic crunch into the city grid.', fn(D, t) { [80, 120, 200].forEach((f, i) => tone(D, t, f, 0.18, { type: 'square', glide: 0.4, gt: 0.15, lp: 1500, vol: 0.09 - i * 0.02, rev: 0.2 })); noise(D, t, 0.1, { f: 1200, vol: 0.06 }); } },
         glitch: { title: 'Glitch', blurb: 'Random data where a sound should be.', fn(D, t) { glitch(D, t, { vol: 0.05, n: 8, pan: Math.random() * 2 - 1 }); } },
+        birdSpawn: { title: 'Anomaly bird appears', blurb: 'A soft wing-flutter and a chirp, in the phase’s key.', fn(D, t, T) { for (let k = 0; k < 3; k++) noise(D, t + k * 0.05, 0.03, { f: 1800, q: 2, vol: 0.03, rev: 0.1, pan: 0.5 - k * 0.3 }); tone(D, t + 0.15, M(T.root + 24), 0.06, { glide: 1.3, gt: 0.05, vol: 0.03, rev: 0.3 }); } },
+        birdCatch: { title: 'Bird caught', blurb: 'The main micro-reward. A bright pop and a note up.', fn(D, t, T) { noise(D, t, 0.015, { type: 'highpass', f: 3000, vol: 0.06, rev: 0 }); bell(D, t, M(T.root + 12), 0.4, { ratio: 2, idx: 1, vol: 0.07, rev: T.rev }); bell(D, t + 0.07, M(T.root + 19), 0.5, { ratio: 2, idx: 1, vol: 0.06, rev: T.rev }); } },
+        birdRare: { title: 'Rare bird caught', blurb: 'Legendary or fragment birds. The same pop, with a sparkle trail.', fn(D, t, T) { noise(D, t, 0.015, { type: 'highpass', f: 3000, vol: 0.06, rev: 0 }); [12, 16, 19, 24].forEach((n, i) => bell(D, t + i * 0.05, M(T.root + n), 0.6, { ratio: 3.5, idx: 1.3, vol: 0.05, rev: 0.5 })); } },
+        birdCorrupt: { title: 'Corruption bird', blurb: 'The one that steals 15% of your energy. A sour pop that sinks.', fn(D, t) { noise(D, t, 0.02, { type: 'highpass', f: 2500, vol: 0.06, rev: 0 }); tone(D, t, 520, 0.3, { type: 'sawtooth', lp: 1500, glide: 0.45, gt: 0.3, vol: 0.08, rev: 0.2 }); glitch(D, t + 0.1, { vol: 0.03, n: 3 }); } },
+        pixelTear: { title: 'Dead pixel', blurb: 'A 3×3 tear in reality, clicked. A tiny, very high tick.', fn(D, t) { tone(D, t, 6200, 0.02, { vol: 0.04, rev: 0.4 }); tone(D, t + 0.03, 7400, 0.02, { vol: 0.025, rev: 0.4 }); } },
+        featherCollect: { title: 'Duck feather', blurb: 'A falling feather, caught. A soft airy swish.', fn(D, t) { noise(D, t, 0.25, { f: 2500, f2: 5000, q: 1.5, sus: true, a: 0.1, r: 0.15, vol: 0.04, rev: 0.3 }); bell(D, t + 0.1, M(88), 0.5, { ratio: 2, idx: 0.5, vol: 0.03, rev: 0.5 }); } },
+        protesterBonk: { title: 'Protester bonk', blurb: 'Clicking one of the tiny marchers. A comic hollow bonk.', fn(D, t) { tone(D, t, 380, 0.12, { type: 'triangle', glide: 0.6, gt: 0.1, vol: 0.12, rev: 0.1 }); wood(D, t, 700, { vol: 0.06 }); } },
+        spellCast: { title: 'Compiler spell', blurb: 'Casting from the Corruption Compiler. A shimmering upward swirl.', fn(D, t, T) { noise(D, t, 0.35, { f: 800, f2: 6000, q: 5, sus: true, a: 0.3, r: 0.1, vol: 0.04, rev: 0.4 }); [0, 7, 14].forEach((n, i) => bell(D, t + 0.1 + i * 0.07, M(T.root + 12 + n), 0.5, { ratio: 4.23, idx: 1.5, vol: 0.04, rev: 0.5 })); } },
+        vent: { title: 'Instability vent', blurb: 'Releasing pressure into Fragments. A steam valve hiss.', fn(D, t) { noise(D, t, 0.7, { type: 'highpass', f: 2500, f2: 1200, sus: true, a: 0.02, r: 0.4, vol: 0.09, rev: 0.2 }); tone(D, t, 90, 0.4, { type: 'triangle', glide: 0.7, gt: 0.4, vol: 0.08 }); } },
+        harvest: { title: 'DATA harvested', blurb: 'Clicking a fake desktop notification or a scrambled label for DATA. A quick data chirp.', fn(D, t) { [0, 5, 12].forEach((n, i) => tone(D, t + i * 0.035, M(84 + n), 0.03, { type: 'square', lp: 4000, vol: 0.035, rev: 0.1 })); } },
+        sugarRush: { title: 'Sugar Rush', blurb: 'Clicking Overseer-chan. Saccharine, like a cartoon sparkle, and slightly too loud.', fn(D, t) { [0, 4, 7, 12, 16, 19].forEach((n, i) => tone(D, t + i * 0.035, M(84 + n), 0.08, { type: 'triangle', vol: 0.05, rev: 0.4 })); } },
     };
+
+    /* ── COVERAGE: every event in the game, and what it plays ────────────────
+       Built from CODEBASE_FULL_SUMMARY.md, module by module. This is the wiring
+       guide for later: `sounds` lists cue:/stinger:/sfx: ids. An empty list
+       means "no sound on purpose" and `note` says why (a visual-only effect, a
+       text line, or something that already plays a sound through another row).
+       qa: the lab checks every id here exists, so a renamed cue shows up red. */
+    const COVERAGE = [
+        // Screens and story
+        ['Screens & story', 'Boot sequence', 'systems4 BootSequence', ['cue:boot']],
+        ['Screens & story', 'Home screen / save slots', 'game.js Menu', ['cue:menu']],
+        ['Screens & story', 'Pause menu', 'game.js PauseMenu', ['cue:pause']],
+        ['Screens & story', 'Lore cutscene (by mood)', 'game.js LoreSystem', ['cue:lore', 'cue:lore_wonder', 'cue:lore_horror', 'cue:lore_mechanical', 'cue:lore_mystical', 'cue:lore_crisis', 'stinger:loreReveal', 'sfx:type']],
+        ['Screens & story', 'Chapter change (lore phase)', 'game.js _applyLorePhaseTheme', ['stinger:phaseAdvance']],
+        ['Screens & story', 'Story phases 0–VI', 'game.js getLorePhase', ['cue:phase0', 'cue:phase1', 'cue:phase2', 'cue:phase3', 'cue:phase4', 'cue:phase5', 'cue:phase6']],
+        ['Screens & story', 'Prestige screen', 'game.js Prestige', ['cue:prestige', 'stinger:prestigeFanfare']],
+        ['Screens & story', 'Run laws (post-prestige pick)', 'systems2 RunMutation', ['cue:runLaws']],
+        ['Screens & story', 'The End: crash, title, epilogue', 'game.js EndSeq', ['stinger:endGlitch', 'cue:endgame']],
+        ['Screens & story', 'End credits', 'game.js EndSeq', ['cue:credits']],
+        ['Screens & story', 'Duck Companion reveal', 'game.js DuckCompanion', ['stinger:duckReveal']],
+        ['Screens & story', 'Instability first revealed', 'systems4 ProgressiveHorror', ['stinger:instabilityReveal']],
+        ['Screens & story', 'Welcome back / streak', 'systems5 SessionStreak, SentientTab', ['stinger:welcomeBack']],
+        ['Screens & story', 'Witching Hour (3–4 am)', 'game.js WitchingHour', ['stinger:witchingHour']],
+        ['Screens & story', 'NULL voice lines', 'systems3 VoiceSystem', ['stinger:nullSpeaks'], 'Plays under the voice line from voice_bank.js.'],
+        // Encounters
+        ['Encounters', 'Duck Tribunal', 'game.js DuckTribunal', ['cue:duckTribunal', 'sfx:gavel']],
+        ['Encounters', 'Ducky Council vote', 'game.js DuckyCouncil', ['cue:duckyCouncil', 'sfx:gavel', 'stinger:eventWin', 'stinger:eventFail']],
+        ['Encounters', 'Duck Ransom (stolen button)', 'systems2 DuckRansom', ['cue:duckRansom']],
+        ['Encounters', 'NULL interrogation', 'systems4 NullInterrogation', ['cue:nullInterrogation', 'stinger:nullSpeaks']],
+        ['Encounters', "Prisoner's Dilemma", 'game.js PrisonersDilemma', ['cue:prisonersDilemma']],
+        ['Encounters', 'CAPTCHA / Anti-CAPTCHA', 'game.js AntiCaptcha', ['cue:captcha']],
+        ['Encounters', 'Existential Crisis (1M clicks)', 'game.js ExistentialCrisis', ['cue:existentialCrisis']],
+        ['Encounters', 'Minigame Decoy (tic-tac-toe)', 'systems3 MinigameDecoy', ['cue:minigameDecoy']],
+        ['Encounters', 'BIOS screen', 'systems3 BIOSLayer', ['cue:bios']],
+        ['Encounters', 'Quarantine Zone', 'systems3 QuarantineZone', ['cue:quarantine']],
+        ['Encounters', 'Severance offer (Ransom Protocol)', 'game.js RansomProtocol', ['cue:severance']],
+        ['Encounters', 'Walker Expedition', 'game.js CityPolicy', ['cue:expedition']],
+        ['Encounters', 'Echo Probe mission', 'game.js EchoProbe', ['cue:echoProbe', 'stinger:eventWin', 'stinger:eventFail']],
+        ['Encounters', 'Fake crash / SysDiag BSOD', 'game.js FakeCrash, SysDiag', ['stinger:crashCut', 'cue:fakeCrash', 'stinger:crashReveal']],
+        ['Encounters', 'Wipe Protocol (Intercepted Signals)', 'game.js InterceptedSignals', ['cue:wipeProtocol']],
+        ['Encounters', 'Auto Rebellion (generator strike)', 'game.js AutoRebellion', ['cue:autoRebellion']],
+        ['Encounters', 'NULL tab', 'game.js NullTab', ['cue:nullTab']],
+        ['Encounters', 'Anomaly choice / Unstable Rift', 'game.js AnomalyChoice', ['stinger:anomalyChoice']],
+        ['Encounters', 'Ghost Operator', 'systems3 GhostOperator, systems4 AuditoryParanoia', ['stinger:ghostPass'], 'The loot-or-purge choice uses eventWin / eventFail.'],
+        // Bosses
+        ['Bosses', 'Anomaly Boss (Reality Breach)', 'game.js AnomalyBoss', ['sfx:breach', 'cue:anomalyBoss','stinger:eventWin', 'stinger:eventFail']],
+        ['Bosses', 'Memory Leak boss', 'systems3 MemoryLeakBoss', ['stinger:eventStart', 'cue:memoryLeak', 'stinger:eventWin', 'stinger:eventFail']],
+        ['Bosses', 'Firewall boss', 'game.js FirewallBoss', ['stinger:eventStart', 'cue:firewallBoss', 'stinger:eventWin']],
+        // World events
+        ['World events', 'Quantum Surge', 'game.js WorldEvents', ['sfx:surge', 'cue:quantumSurge']],
+        ['World events', 'Data Storm', 'game.js WorldEvents', ['sfx:storm', 'cue:dataStorm']],
+        ['World events', 'Walker Strike', 'game.js WorldEvents', ['sfx:strike', 'cue:walkerStrike']],
+        ['World events', 'Momentum Cascade', 'game.js WorldEvents', ['sfx:momentum', 'cue:momentumCascade']],
+        ['World events', 'Corrupt Packet', 'game.js WorldEvents', ['sfx:corrupt', 'cue:corruptPacket']],
+        ['World events', 'Time Freeze', 'game.js WorldEvents', ['sfx:freeze', 'cue:timeFreeze']],
+        ['World events', 'Memory Purge', 'game.js WorldEvents', ['sfx:purge', 'cue:memoryPurge']],
+        // Modes
+        ['Modes', 'Redline', 'systems3 RedlineMechanic', ['cue:redline', 'stinger:redlineCollapse']],
+        ['Modes', 'Eye of the Storm', 'systems4 EyeOfStorm', ['cue:eyeOfStorm']],
+        ['Modes', 'Overdrive (×10 button)', 'game.js OverdriveMode', ['cue:overdrive']],
+        ['Modes', 'Controlled Overload', 'game.js ControlledOverload', ['cue:controlledOverload']],
+        ['Modes', 'Simulation Schism: Omega', 'systems2 SimulationSchism', ['cue:omegaTimeline']],
+        ['Modes', 'Cognitive Dampener', 'systems3 CognitiveDampener', ['cue:dampened']],
+        ['Modes', 'Cryo Stasis', 'game.js CryoStasis', ['cue:dampened']],
+        ['Modes', 'Cognitive Denial (safe room)', 'game.js CognitiveDenial', ['cue:dampened']],
+        ['Modes', 'Zalgo upgrade (screen inverted)', 'game.js ZalgoUpgrade', ['cue:zalgoInversion']],
+        ['Modes', 'Rogue button', 'game.js RogueUI', ['cue:rogueButton']],
+        // Instability
+        ['Instability', 'Rising instability (all phases)', 'game.js Instability', ['layer:instability'], 'setIntensity() on the phase themes: heartbeat, tempo, drift, distortion.'],
+        ['Instability', 'Reality Echo (20%)', 'game.js InstabilityEvents', ['stinger:realityEcho']],
+        ['Instability', 'Signal Distortion (40%)', 'game.js InstabilityEvents', ['stinger:signalDistortion']],
+        ['Instability', 'Chaos Dividend (60%)', 'game.js InstabilityEvents', ['stinger:chaosDividend']],
+        ['Instability', 'Reality Fracture (80%)', 'game.js InstabilityEvents', ['stinger:realityFracture']],
+        ['Instability', 'Reality Collapse (100%)', 'game.js InstabilityEvents', ['stinger:realityCollapse']],
+        ['Instability', 'Instability vent', 'game.js InstabilityVent', ['sfx:vent']],
+        ['Instability', 'Glitch Market opens', 'game.js GlitchMarket', ['stinger:glitchMarketOpen']],
+        ['Instability', 'Blight Spore mutation', 'systems4 BlightSporeInteraction', ['stinger:sporeMutate']],
+        // Rewards
+        ['Rewards & gambles', 'Achievement', 'game.js Achieve', ['stinger:achievement'], 'Also Click Personality and achievement milestones.'],
+        ['Rewards & gambles', 'Mega Project complete', 'game.js MegaProjects', ['stinger:megaProject']],
+        ['Rewards & gambles', 'Energy milestone flash', 'game.js VisualMilestones', ['stinger:milestone']],
+        ['Rewards & gambles', 'Void Branch reveal', 'game.js VoidBranch', ['stinger:voidReveal']],
+        ['Rewards & gambles', 'Resonance burst (×10)', 'systems2 ResonanceHarvest', ['stinger:resonanceBurst']],
+        ['Rewards & gambles', 'Lucky Pulse orb', 'game.js LuckyPulse', ['stinger:luckySpawn', 'stinger:luckyGood', 'stinger:luckyBad']],
+        ['Rewards & gambles', 'The Machine / Quantum Lottery', 'game.js TheMachine, QuantumLottery', ['stinger:jackpot', 'stinger:luckyBad']],
+        ['Rewards & gambles', 'Suspicious Button', 'game.js SuspiciousButton', ['stinger:jackpot', 'stinger:eventFail']],
+        ['Rewards & gambles', 'Hidden mechanic / dead pixel / terminal egg', 'game.js HiddenMechanics, DeadPixel, Terminal', ['stinger:secretFound', 'sfx:pixelTear']],
+        ['Rewards & gambles', 'Anomaly birds', 'game.js Birds', ['sfx:birdSpawn', 'sfx:birdCatch', 'sfx:birdRare', 'sfx:birdCorrupt']],
+        ['Rewards & gambles', 'Duck feather', 'game.js DuckFeather', ['sfx:featherCollect']],
+        ['Rewards & gambles', 'Micro protesters', 'game.js MicroProtesters', ['sfx:protesterBonk']],
+        ['Rewards & gambles', 'Overseer-chan', 'game.js OverseerChan', ['sfx:sugarRush']],
+        ['Rewards & gambles', 'Corruption Compiler spells', 'game.js CorruptionCompiler', ['sfx:spellCast']],
+        ['Rewards & gambles', 'Desktop invasion / semantic satiation', 'game.js DesktopInvasion, SemanticSatiation', ['sfx:harvest']],
+        // Buttons and interface
+        ['Button & interface', 'ACQUIRE click', 'game.js Game.click', ['sfx:click'], 'Four variants per phase.'],
+        ['Button & interface', 'Angry button explodes', 'game.js AngryButton', ['stinger:buttonExplode']],
+        ['Button & interface', 'Energy display falls off', 'game.js OverflowEvent', ['stinger:uiFall']],
+        ['Button & interface', 'Shop purchases', 'game.js Game.buy', ['sfx:buy', 'sfx:heavyBuy', 'sfx:fail']],
+        ['Button & interface', 'City building placed', 'systems4 City.buy patch', ['sfx:buildingPlace']],
+        ['Button & interface', 'Windows open / close', 'window_manager.js, PanelNav', ['sfx:panelOpen', 'sfx:panelClose']],
+        ['Button & interface', 'Tabs, toggles, buttons, hover', 'micro_bus.js', ['sfx:tab', 'sfx:toggleOn', 'sfx:toggleOff', 'sfx:menuClick', 'sfx:hover']],
+        ['Button & interface', 'Notifications and ticker lines', 'showNotif, EarlyEvents, MetaAwareness, TheObserver', ['sfx:notif']],
+        ['Button & interface', 'Lore typewriter', 'game.js LoreSystem', ['sfx:type', 'sfx:loreOpen', 'sfx:loreDismiss']],
+        ['Button & interface', 'Glitch effects', 'Instability _applyEffects, SemanticCorruption', ['sfx:glitch']],
+        // Deliberately silent
+        ['Visual or text only', 'Button Mood, Button Feelings, Lazy Mode', 'game.js', [], 'Text bubbles on the button. A sound every 90 s would nag.'],
+        ['Visual or text only', 'Chromatic aberration, vignette, UI degradation, heat death', 'systems3, game.js', [], 'Visual layers that already track instability; the music carries it.'],
+        ['Visual or text only', 'Continental Drift, Typographical Rot, Cowardly Buttons', 'systems4, game.js', [], 'Slow visual tells. They sit under the instability layer.'],
+        ['Visual or text only', 'Tab title changes (Sentient Tab, Tab Awareness)', 'systems3, game.js', [], 'Happen while the tab is hidden, so nobody hears them.'],
+        ['Visual or text only', 'Mimic / Parasitic / Past-Self cursors', 'systems2, game.js', ['stinger:ghostPass'], 'Share the Ghost Operator pass so cursor ghosts sound related.'],
+        ['Visual or text only', 'Flavor ticker, Schrödinger tooltips, corrupt tooltips', 'game.js', [], 'Reading material. Silence keeps them unsettling.'],
+        ['Visual or text only', 'Console whispers, F12 stalker', 'systems2, game.js', [], 'Live in DevTools, outside the game window.'],
+        ['Visual or text only', 'Data Blight spread, Thermal Decay', 'game.js, systems2', [], 'Gradual city states. Covered by the phase theme and instability.'],
+    ];
 
     // ── Public API ─────────────────────────────────────────────────────────
     function play(name, opt) {
@@ -1380,7 +2140,7 @@
     function meta(table) {
         return Object.keys(table).map(id => {
             const c = table[id];
-            return { id, title: c.title, blurb: c.blurb, group: c.group, phase: c.phase, chapter: c.chapter, sub: c.sub, bpm: c.bpm, key: c.key };
+            return { id, title: c.title, blurb: c.blurb, group: c.group, cat: c.cat, mood: c.mood, phase: c.phase, chapter: c.chapter, sub: c.sub, bpm: c.bpm, key: c.key };
         });
     }
 
@@ -1401,6 +2161,11 @@
         cues: () => meta(CUES),
         stingers: () => meta(STINGERS),
         sfxList: () => meta(SFX),
+        coverage: () => COVERAGE.map(r => ({ area: r[0], event: r[1], source: r[2], sounds: r[3].slice(), note: r[4] || '' })),
+        has(ref) {
+            const [kind, id] = String(ref).split(':');
+            return !!({ cue: CUES, stinger: STINGERS, sfx: SFX, layer: { instability: 1 } }[kind] || {})[id];
+        },
         clickKit: (phase) => {
             const k = CLICK_KITS[clamp((phase === undefined ? sfxPhase : phase) | 0, 0, 6)];
             return { name: k.name, variants: k.labels.slice() };
